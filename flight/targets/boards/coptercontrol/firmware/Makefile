@@ -44,14 +44,14 @@ MODULES += Receiver
 MODULES += ManualControl
 MODULES += FirmwareIAP
 MODULES += Telemetry
+MODULES += MotionCapture
 
 # List of optional modules to include
 OPTMODULES += CameraStab
 OPTMODULES += ComUsbBridge
-OPTMODULES += GPS
+# OPTMODULES += GPS
 OPTMODULES += TxPID
-OPTMODULES += Osd/osdoutput
-OPTMODULES += MotionCapture
+# OPTMODULES += Osd/osdoutput
 #OPTMODULES += Altitude
 #OPTMODULES += Fault
 

@@ -18,6 +18,7 @@
 			<elementname>Altitude</elementname>
 			<elementname>Airspeed</elementname>
 			<elementname>MagBaro</elementname>
+			<elementname>MotionCapture</elementname>
 			<!-- navigation -->
 			<elementname>FlightPlan</elementname>
 			<!-- telemetry -->
@@ -28,9 +29,8 @@
 			<elementname>Com2UsbBridge</elementname>
 			<elementname>Usb2ComBridge</elementname>
 			<!-- optional -->
-			<elementname>GPS</elementname>
-			<elementname>OSDGen</elementname>
-			<elementname>MotionCapture</elementname>
+			<!-- <elementname>GPS</elementname> -->
+			<!-- <elementname>OSDGen</elementname> -->
 		</elementnames>
 	</field>
 	<field name="Running" units="bool" type="enum">
@@ -50,6 +50,7 @@
 			<elementname>Altitude</elementname>
 			<elementname>Airspeed</elementname>
 			<elementname>MagBaro</elementname>
+			<elementname>MotionCapture</elementname>
 			<!-- navigation -->
 			<elementname>FlightPlan</elementname>
 			<!-- telemetry -->
@@ -60,9 +61,8 @@
 			<elementname>Com2UsbBridge</elementname>
 			<elementname>Usb2ComBridge</elementname>
 			<!-- optional -->
-			<elementname>GPS</elementname>
-			<elementname>OSDGen</elementname>
-			<elementname>MotionCapture</elementname>
+			<!-- <elementname>GPS</elementname> -->
+			<!-- <elementname>OSDGen</elementname> -->
 		</elementnames>
 		<options>
 			<option>False</option>
@@ -86,6 +86,7 @@
 			<elementname>Altitude</elementname>
 			<elementname>Airspeed</elementname>
 			<elementname>MagBaro</elementname>
+			<elementname>MotionCapture</elementname>
 			<!-- navigation -->
 			<elementname>FlightPlan</elementname>
 			<!-- telemetry -->
@@ -96,9 +97,8 @@
 			<elementname>Com2UsbBridge</elementname>
 			<elementname>Usb2ComBridge</elementname>
 			<!-- optional -->
-			<elementname>GPS</elementname>
-			<elementname>OSDGen</elementname>
-			<elementname>MotionCapture</elementname>
+			<!-- <elementname>GPS</elementname> -->
+			<!-- <elementname>OSDGen</elementname> -->
 		</elementnames>
 	</field>
         <access gcs="readonly" flight="readwrite"/>

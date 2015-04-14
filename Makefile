@@ -213,7 +213,8 @@ export OPUAVSYNTHDIR := $(BUILD_DIR)/uavobject-synthetics/flight
 export OPGCSSYNTHDIR := $(BUILD_DIR)/openpilotgcs-synthetics
 
 # Define supported board lists
-ALL_BOARDS    := coptercontrol oplinkmini revolution osd revoproto simposix discoveryf4bare gpsplatinum
+# ALL_BOARDS    := coptercontrol oplinkmini revolution osd revoproto simposix discoveryf4bare gpsplatinum
+ALL_BOARDS    := coptercontrol
 
 # Short names of each board (used to display board name in parallel builds)
 coptercontrol_short    := 'cc  '
@@ -511,7 +512,7 @@ ifeq ($(QMAKE_SKIP),)
 	$(V1) $(MKDIR) -p $(BUILD_DIR)/uploader_$(GCS_BUILD_CONF)
 	$(V1) ( cd $(BUILD_DIR)/uploader_$(GCS_BUILD_CONF) && \
 	    $(QMAKE) $(ROOT_DIR)/ground/openpilotgcs/src/experimental/USB_UPLOAD_TOOL/upload.pro -spec $(QT_SPEC) -r CONFIG+="$(GCS_BUILD_CONF) $(GCS_SILENT)" $(GCS_QMAKE_OPTS) \
-	) 
+	)
 else
 	@$(ECHO) "skipping qmake"
 endif
