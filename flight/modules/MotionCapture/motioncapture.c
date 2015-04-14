@@ -3,6 +3,7 @@
 #include <openpilot.h>
 #include "taskinfo.h"
 #include "positionstate.h"
+#include "homelocation.h"
 
 #define STACK_SIZE_BYTES 1024
 #define TASK_PRIORITY    (tskIDLE_PRIORITY + 1)
@@ -26,6 +27,17 @@ int32_t MotiontCaptureStart(void)
 int32_t MotionCaptureInitialize(void)
 {
     PositionStateInitialize();
+
+    // Set home location
+    HomeLocationInitialize();
+    HomeLocationData home;
+    HomeLocationGet(&home);
+    home.Latitude = 0;
+    home.Longitude = 0;
+    home.Altitude = 0;
+    home.Set = HOMELOCATION_SET_TRUE;
+    HomeLocationSet(&home);
+
     return 0;
 }
 
