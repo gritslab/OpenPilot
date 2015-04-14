@@ -51,6 +51,7 @@ OPTMODULES += ComUsbBridge
 OPTMODULES += GPS
 OPTMODULES += TxPID
 OPTMODULES += Osd/osdoutput
+OPTMODULES += MotionCapture
 #OPTMODULES += Altitude
 #OPTMODULES += Fault
 
@@ -83,7 +84,7 @@ ifndef TESTAPP
     SRC += $(OPUAVOBJ)/uavobjectmanager.c
     SRC += $(OPUAVOBJ)/uavobjectpersistence.c
     SRC += $(OPUAVOBJ)/eventdispatcher.c
-    
+
     ## UAVObjects
     SRC += $(OPUAVSYNTHDIR)/accessorydesired.c
     SRC += $(OPUAVSYNTHDIR)/objectpersistence.c
@@ -126,6 +127,7 @@ ifndef TESTAPP
     SRC += $(OPUAVSYNTHDIR)/ratedesired.c
     SRC += $(OPUAVSYNTHDIR)/txpidsettings.c
     SRC += $(OPUAVSYNTHDIR)/mpu6000settings.c
+    SRC += $(OPUAVSYNTHDIR)/positionstate.c
     # Command line option for Gcsreceiver module
     ifeq ($(GCSRECEIVER), YES)
         SRC += $(OPUAVSYNTHDIR)/gcsreceiver.c

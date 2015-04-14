@@ -9,7 +9,7 @@
 			<elementname>CallbackScheduler1</elementname>
 			<elementname>CallbackScheduler2</elementname>
 			<elementname>CallbackScheduler3</elementname>
-			<!-- fligth -->
+			<!-- flight -->
 			<elementname>Receiver</elementname>
 			<elementname>Stabilization</elementname>
 			<elementname>Actuator</elementname>
@@ -30,8 +30,9 @@
 			<!-- optional -->
 			<elementname>GPS</elementname>
 			<elementname>OSDGen</elementname>
+			<elementname>MotionCapture</elementname>
 		</elementnames>
-	</field> 
+	</field>
 	<field name="Running" units="bool" type="enum">
 		<elementnames>
 			<!-- system -->
@@ -40,7 +41,7 @@
 			<elementname>CallbackScheduler1</elementname>
 			<elementname>CallbackScheduler2</elementname>
 			<elementname>CallbackScheduler3</elementname>
-			<!-- fligth -->
+			<!-- flight -->
 			<elementname>Receiver</elementname>
 			<elementname>Stabilization</elementname>
 			<elementname>Actuator</elementname>
@@ -61,6 +62,7 @@
 			<!-- optional -->
 			<elementname>GPS</elementname>
 			<elementname>OSDGen</elementname>
+			<elementname>MotionCapture</elementname>
 		</elementnames>
 		<options>
 			<option>False</option>
@@ -75,7 +77,7 @@
 			<elementname>CallbackScheduler1</elementname>
 			<elementname>CallbackScheduler2</elementname>
 			<elementname>CallbackScheduler3</elementname>
-			<!-- fligth -->
+			<!-- flight -->
 			<elementname>Receiver</elementname>
 			<elementname>Stabilization</elementname>
 			<elementname>Actuator</elementname>
@@ -96,8 +98,9 @@
 			<!-- optional -->
 			<elementname>GPS</elementname>
 			<elementname>OSDGen</elementname>
+			<elementname>MotionCapture</elementname>
 		</elementnames>
-	</field> 
+	</field>
         <access gcs="readonly" flight="readwrite"/>
         <telemetrygcs acked="false" updatemode="onchange" period="0"/>
         <telemetryflight acked="false" updatemode="periodic" period="10000"/>
