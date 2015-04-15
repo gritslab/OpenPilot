@@ -5,12 +5,23 @@
 #include "positionstate.h"
 #include "homelocation.h"
 
-#define STACK_SIZE_BYTES 1024
+#include <pios_com.h>
+
+#define STACK_SIZE_BYTES 512
 #define TASK_PRIORITY    (tskIDLE_PRIORITY + 1)
-#define UPDATE_PERIOD    50
+#define UPDATE_PERIOD_MS    10
 
 static xTaskHandle taskHandle;
 static void motionCaptureTask(void *parameters);
+
+static uint32_t comPortMain;
+static uint32_t comPortFlex;
+
+// struct PosData {
+//     char x;
+//     char y;
+//     char z;
+// };
 
 int32_t MotiontCaptureStart(void)
 {
@@ -38,6 +49,10 @@ int32_t MotionCaptureInitialize(void)
     home.Set = HOMELOCATION_SET_TRUE;
     HomeLocationSet(&home);
 
+    // Set port
+    comPortMain = PIOS_COM_GPS;
+    comPortFlex = PIOS_COM_TELEM_RF;
+
     return 0;
 }
 
@@ -45,16 +60,27 @@ MODULE_INITCALL(MotionCaptureInitialize, MotiontCaptureStart);
 
 static void motionCaptureTask(__attribute__((unused)) void *parameters)
 {
-    static portTickType lastSysTime;
-
-    lastSysTime = xTaskGetTickCount();
     //This data struct is contained in the automatically generated UAVObject code
     PositionStateData data;
 
     //Populate the data struct with the UAVObject's current values
     PositionStateGet(&data);
 
+    portTickType readDelay = 100 / portTICK_RATE_MS;
+    uint8_t BUFFER_SIZE = 128;
+    char readBuffer[BUFFER_SIZE];
+    char writeBuffer[BUFFER_SIZE];
+    uint16_t cnt;
+
+    // PosData pos;
+
+    TickType_t lastWakeTime  = xTaskGetTickCount();
     while(1) {
+        while ((cnt = PIOS_COM_ReceiveBuffer(comPortMain, (uint8_t *)readBuffer, BUFFER_SIZE, readDelay)) > 0) {
+            strncpy(writeBuffer, readBuffer, cnt);
+            PIOS_COM_SendBufferNonBlocking(comPortFlex, (uint8_t *)writeBuffer, cnt);
+        }
+
         //Get a new reading from the thermocouple
         data.East = 1;
         data.North = 2;
@@ -64,6 +90,6 @@ static void motionCaptureTask(__attribute__((unused)) void *parameters)
         PositionStateSet(&data);
 
         // Delay until it is time to read the next sample
-        vTaskDelayUntil(&lastSysTime, UPDATE_PERIOD / portTICK_RATE_MS);
+        vTaskDelayUntil(&lastWakeTime, UPDATE_PERIOD_MS  / portTICK_RATE_MS);
     }
 }
