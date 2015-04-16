@@ -26,8 +26,8 @@
 			<elementname>TelemetryRx</elementname>
 			<!-- com -->
 			<elementname>RadioRx</elementname>
-			<elementname>Com2UsbBridge</elementname>
-			<elementname>Usb2ComBridge</elementname>
+			<!-- <elementname>Com2UsbBridge</elementname> -->
+			<!-- <elementname>Usb2ComBridge</elementname> -->
 			<!-- optional -->
 			<!-- <elementname>GPS</elementname> -->
 			<!-- <elementname>OSDGen</elementname> -->
@@ -58,8 +58,8 @@
 			<elementname>TelemetryRx</elementname>
 			<!-- com -->
 			<elementname>RadioRx</elementname>
-			<elementname>Com2UsbBridge</elementname>
-			<elementname>Usb2ComBridge</elementname>
+			<!-- <elementname>Com2UsbBridge</elementname> -->
+			<!-- <elementname>Usb2ComBridge</elementname> -->
 			<!-- optional -->
 			<!-- <elementname>GPS</elementname> -->
 			<!-- <elementname>OSDGen</elementname> -->
@@ -94,8 +94,8 @@
 			<elementname>TelemetryRx</elementname>
 			<!-- com -->
 			<elementname>RadioRx</elementname>
-			<elementname>Com2UsbBridge</elementname>
-			<elementname>Usb2ComBridge</elementname>
+			<!-- <elementname>Com2UsbBridge</elementname> -->
+			<!-- <elementname>Usb2ComBridge</elementname> -->
 			<!-- optional -->
 			<!-- <elementname>GPS</elementname> -->
 			<!-- <elementname>OSDGen</elementname> -->
