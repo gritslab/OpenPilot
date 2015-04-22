@@ -50,6 +50,10 @@ Flashing firmware
 
   * This will require a recompile of the uavobjects (i.e. `>> make uavobjects`)
 
+* If a compile error complains about a UAVObject make sure the object is added to the make file at
+
+    `OpenPilot/flight/targets/boards/coptercontrol/firmware/Makefile
+
 * Create the module folder (i.e. `NewModule`) at
 
     `OpenPilot/flight/modules'

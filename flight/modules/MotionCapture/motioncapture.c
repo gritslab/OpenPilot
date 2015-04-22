@@ -3,6 +3,7 @@
 #include <openpilot.h>
 #include "taskinfo.h"
 #include "positionstate.h"
+#include "pathdesired.h"
 #include "homelocation.h"
 
 #include <pios_com.h>
@@ -17,16 +18,36 @@ static void motionCaptureTask(void *parameters);
 static uint32_t comPortMain;
 static uint32_t comPortFlex;
 
-// size 3*4 = 13 bytes;
-struct PosData {
+enum MsgType {
+    POSITION = 1,
+    POSITION_DESIRED = 2
+};
+
+// size = 4
+struct MsgHeader {
+    uint8_t marker;
+    uint8_t parity;
+    uint8_t target;
+    uint8_t type;
+};
+static uint8_t PARITY_BYTE_IND = 1;
+
+// size 4+4*4 = 20
+struct MsgPosition {
+    struct MsgHeader header;
     float x;
     float y;
     float z;
+    float yaw;
 };
 
-union Data {
-    struct PosData pos;
-    uint8_t c;
+// size 4+4*4 = 20
+struct MsgPositionDesired {
+    struct MsgHeader header;
+    float x;
+    float y;
+    float z;
+    float yaw;
 };
 
 // reverses a string 'str' of length 'len'
@@ -90,6 +111,15 @@ void ftoa(float n, char *res, int afterpoint)
     }
 }
 
+bool parityCheck(uint8_t* msg, uint8_t msgSize)
+{
+    uint8_t msgByte = 0;
+    uint8_t parityByte = msg[PARITY_BYTE_IND];
+    for (uint8_t i=PARITY_BYTE_IND+1; i<msgSize; ++i) {
+        msgByte ^= msg[i];
+    }
+    return (msgByte == parityByte);
+}
 
 int32_t MotiontCaptureStart(void)
 {
@@ -106,6 +136,7 @@ int32_t MotiontCaptureStart(void)
 int32_t MotionCaptureInitialize(void)
 {
     PositionStateInitialize();
+    PathDesiredInitialize();
 
     // Set home location
     HomeLocationInitialize();
@@ -119,9 +150,10 @@ int32_t MotionCaptureInitialize(void)
 
     // Set port
     comPortMain = PIOS_COM_GPS;
-    comPortFlex = PIOS_COM_TELEM_RF;
-
     PIOS_COM_ChangeBaud(comPortMain, 115200);
+
+    comPortFlex = PIOS_COM_TELEM_RF;
+    PIOS_COM_ChangeBaud(comPortFlex, 115200);
 
     return 0;
 }
@@ -130,87 +162,82 @@ MODULE_INITCALL(MotionCaptureInitialize, MotiontCaptureStart);
 
 static void motionCaptureTask(__attribute__((unused)) void *parameters)
 {
-    //This data struct is contained in the automatically generated UAVObject code
+    // UAVObjects
     PositionStateData posState;
-
-    //Populate the data struct with the UAVObject's current values
     PositionStateGet(&posState);
 
+    PathDesiredData pathDesired;
+    PathDesiredGet(&pathDesired);
+
+
     portTickType readDelay = 10 / portTICK_RATE_MS;
-    uint8_t BUFFER_SIZE = 32;
+    uint8_t BUFFER_SIZE = 128;
     char readBuffer[BUFFER_SIZE];
-    uint16_t cnt;
+    uint16_t readSize;
 
-    union Data data;
-    uint8_t dataSize = sizeof(data);
-    memset(&data, 0, dataSize);
-    uint8_t posDataInd = 0;
-    bool posDataValid = false;
-    uint8_t* dataIndPointer;
-    dataIndPointer = &data.c;
-
-    char writeBuffer[BUFFER_SIZE];
     // int loopCnt = 0;
+    // char writeBuffer[BUFFER_SIZE];
+    // writeBuffer[0] = 'H';
+    // writeBuffer[1] = 'E';
+    // writeBuffer[2] = 'L';
+    // writeBuffer[3] = 'L';
+    // writeBuffer[4] = 'O';
+    // writeBuffer[5] = '\0';
+    // PIOS_COM_SendBufferNonBlocking(comPortFlex, (uint8_t *)writeBuffer, strlen(writeBuffer));
+
+    union Msg {
+        struct MsgHeader header;
+        struct MsgPosition pos;
+        struct MsgPositionDesired posDesired;
+    } msg;
+    memset(&msg, 0, sizeof(msg));
+
+    bool msgMarkerFlag = false;
+    uint8_t msgByteInd = 0;
+    uint8_t* msgBytePointer = (uint8_t*)&msg;
 
     TickType_t lastWakeTime  = xTaskGetTickCount();
     while(1) {
-        while ((cnt = PIOS_COM_ReceiveBuffer(comPortMain, (uint8_t *)readBuffer, BUFFER_SIZE, readDelay)) > 0) {
-            for (uint8_t i=0; i<cnt; ++i) {
-                if (posDataValid) {
-                    dataIndPointer[posDataInd++] = readBuffer[i];
-
-                    // intToStr(posDataInd, writeBuffer, 4);
-                    // PIOS_COM_SendBufferNonBlocking(comPortFlex, (uint8_t *)writeBuffer, strlen(writeBuffer));
-                    // PIOS_COM_SendCharNonBlocking(comPortFlex, '\t');
-
-                    // intToStr(dataSize, writeBuffer, 4);
-                    // PIOS_COM_SendBufferNonBlocking(comPortFlex, (uint8_t *)writeBuffer, strlen(writeBuffer));
-                    // PIOS_COM_SendCharNonBlocking(comPortFlex, '\t');
-
-                    if (posDataInd == dataSize) {
-
-
-                        posDataInd = 0;
-                        posDataValid = false;
-
-                        // memcpy(&pos, readBuffer, dataSize);
-
-                        // Get a new reading
-                        posState.North = data.pos.x;
-                        posState.East = data.pos.y;
-                        posState.Down = data.pos.z;
-
-                        // Update the UAVObject data. The updated values can be viewed in the GCS.
-                        PositionStateSet(&posState);
-
-                        // intToStr(9999, writeBuffer, 4);
-                        // PIOS_COM_SendBufferNonBlocking(comPortFlex, (uint8_t *)writeBuffer, strlen(writeBuffer));
-                        // PIOS_COM_SendCharNonBlocking(comPortFlex, '\t');
+        while ((readSize = PIOS_COM_ReceiveBuffer(comPortMain, (uint8_t *)readBuffer, BUFFER_SIZE, readDelay)) > 0) {
+            for (uint8_t i=0; i<readSize; ++i) {
+                if (msgMarkerFlag == false) {
+                    if (readBuffer[i] == 0xFF) {
+                        msgMarkerFlag = true;
+                        msgByteInd = 0;
                     }
                 }
 
-                if (readBuffer[i] == '$') {
-                    posDataInd = 0;
-                    posDataValid = true;
+                if (msgMarkerFlag == true) {
+                    msgBytePointer[msgByteInd++] = readBuffer[i];
+                    if (msgByteInd >= sizeof(msg.header)) {
+                        if (msg.header.type == POSITION) {
+                            if (msgByteInd >= sizeof(msg.pos)) {
+                                msgMarkerFlag = false;
+                                if (parityCheck((uint8_t *)&msg, sizeof(msg))) {
+                                    posState.North = msg.pos.x;
+                                    posState.East = msg.pos.y;
+                                    posState.Down = msg.pos.z;
+
+                                    PositionStateSet(&posState);
+                                }
+                            }
+                        } else if (msg.header.type == POSITION_DESIRED) {
+                            if (msgByteInd >= sizeof(msg.posDesired)) {
+                                msgMarkerFlag = false;
+                                if (parityCheck((uint8_t *)&msg, sizeof(msg))) {
+                                    pathDesired.End.North = msg.posDesired.x;
+                                    pathDesired.End.East = msg.posDesired.y;
+                                    pathDesired.End.Down = msg.posDesired.z;
+
+                                    PathDesiredSet(&pathDesired);
+                                }
+                            }
+                        } else {
+                            msgMarkerFlag = false;
+                        }
+                    }
                 }
             }
-            // if (cnt == dataSize && readBuffer[0] == '$') {
-
-            // } else {
-            //     // Output
-            //     loopCnt++;
-            //     if (loopCnt == 100) {
-            //     // ftoa(data.North, writeBuffer, 2);
-            //     // PIOS_COM_SendBufferNonBlocking(comPortFlex, (uint8_t *)writeBuffer, strlen(writeBuffer));
-            //     // PIOS_COM_SendCharNonBlocking(comPortFlex, '\n');
-
-            //         intToStr(cnt, writeBuffer, 4);
-            //         PIOS_COM_SendBufferNonBlocking(comPortFlex, (uint8_t *)writeBuffer, strlen(writeBuffer));
-            //         PIOS_COM_SendCharNonBlocking(comPortFlex, '\t');
-
-            //         loopCnt = 0;
-            //     }
-            // }
         }
 
         // Delay until it is time to read the next sample
