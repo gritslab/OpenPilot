@@ -20,7 +20,7 @@
 			<elementname>MagBaro</elementname>
 			<elementname>MsgReceiver</elementname>
 			<!-- navigation -->
-			<elementname>FlightPlan</elementname>
+			<!-- <elementname>FlightPlan</elementname> -->
 			<!-- telemetry -->
 			<elementname>TelemetryTx</elementname>
 			<elementname>TelemetryRx</elementname>
@@ -31,6 +31,7 @@
 			<!-- optional -->
 			<!-- <elementname>GPS</elementname> -->
 			<!-- <elementname>OSDGen</elementname> -->
+			<elementname>Test</elementname>
 		</elementnames>
 	</field>
 	<field name="Running" units="bool" type="enum">
@@ -52,7 +53,7 @@
 			<elementname>MagBaro</elementname>
 			<elementname>MsgReceiver</elementname>
 			<!-- navigation -->
-			<elementname>FlightPlan</elementname>
+			<!-- <elementname>FlightPlan</elementname> -->
 			<!-- telemetry -->
 			<elementname>TelemetryTx</elementname>
 			<elementname>TelemetryRx</elementname>
@@ -63,6 +64,7 @@
 			<!-- optional -->
 			<!-- <elementname>GPS</elementname> -->
 			<!-- <elementname>OSDGen</elementname> -->
+			<elementname>Test</elementname>
 		</elementnames>
 		<options>
 			<option>False</option>
@@ -88,7 +90,7 @@
 			<elementname>MagBaro</elementname>
 			<elementname>MsgReceiver</elementname>
 			<!-- navigation -->
-			<elementname>FlightPlan</elementname>
+			<!-- <elementname>FlightPlan</elementname> -->
 			<!-- telemetry -->
 			<elementname>TelemetryTx</elementname>
 			<elementname>TelemetryRx</elementname>
@@ -99,6 +101,7 @@
 			<!-- optional -->
 			<!-- <elementname>GPS</elementname> -->
 			<!-- <elementname>OSDGen</elementname> -->
+			<elementname>Test</elementname>
 		</elementnames>
 	</field>
         <access gcs="readonly" flight="readwrite"/>

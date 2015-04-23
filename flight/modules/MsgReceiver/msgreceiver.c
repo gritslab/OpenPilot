@@ -16,7 +16,6 @@ static xTaskHandle taskHandle;
 static void MsgReceiverTask(void *parameters);
 
 static uint32_t comPortMain;
-static uint32_t comPortFlex;
 
 enum MsgType {
     POSITION = 1,
@@ -50,67 +49,6 @@ struct MsgPositionDesired {
     float yaw;
 };
 
-// reverses a string 'str' of length 'len'
-void reverse(char *str, int len)
-{
-    int i=0, j=len-1, temp;
-    while (i<j)
-    {
-        temp = str[i];
-        str[i] = str[j];
-        str[j] = temp;
-        i++; j--;
-    }
-}
-
-// Converts a given integer x to string str[].  d is the number
- // of digits required in output. If d is more than the number
- // of digits in x, then 0s are added at the beginning.
-int intToStr(int x, char str[], int d)
-{
-    int i = 0;
-    while (x)
-    {
-        str[i++] = (x%10) + '0';
-        x = x/10;
-    }
-
-    // If number of digits required is more, then
-    // add 0s at the beginning
-    while (i < d)
-        str[i++] = '0';
-
-    reverse(str, i);
-    str[i] = '\0';
-    return i;
-}
-
-// Converts a floating point number to string.
-void ftoa(float n, char *res, int afterpoint)
-{
-    // Extract integer part
-    int ipart = (int)n;
-
-    // Extract floating part
-    float fpart = n - (float)ipart;
-
-    // convert integer part to string
-    int i = intToStr(ipart, res, 0);
-
-    // check for display option after point
-    if (afterpoint != 0)
-    {
-        res[i] = '.';  // add dot
-
-        // Get the value of fraction part upto given no.
-        // of points after dot. The third parameter is needed
-        // to handle cases like 233.007
-        fpart = fpart * powf(10, afterpoint);
-
-        intToStr((int)fpart, res + i + 1, afterpoint);
-    }
-}
-
 bool parityCheck(uint8_t* msg, uint8_t msgSize)
 {
     uint8_t msgByte = 0;
@@ -119,18 +57,6 @@ bool parityCheck(uint8_t* msg, uint8_t msgSize)
         msgByte ^= msg[i];
     }
     return (msgByte == parityByte);
-}
-
-int32_t MsgReceiverStart(void)
-{
-    xTaskCreate(MsgReceiverTask,
-                "MsgReceiver",
-                STACK_SIZE_BYTES / 4,
-                NULL,
-                TASK_PRIORITY,
-                &taskHandle);
-    PIOS_TASK_MONITOR_RegisterTask(TASKINFO_RUNNING_MSGRECEIVER, taskHandle);
-    return 0;
 }
 
 int32_t MsgReceiverInitialize(void)
@@ -152,9 +78,18 @@ int32_t MsgReceiverInitialize(void)
     comPortMain = PIOS_COM_GPS;
     PIOS_COM_ChangeBaud(comPortMain, 115200);
 
-    comPortFlex = PIOS_COM_TELEM_RF;
-    PIOS_COM_ChangeBaud(comPortFlex, 115200);
+    return 0;
+}
 
+int32_t MsgReceiverStart(void)
+{
+    xTaskCreate(MsgReceiverTask,
+                "MsgReceiver",
+                STACK_SIZE_BYTES / 4,
+                NULL,
+                TASK_PRIORITY,
+                &taskHandle);
+    PIOS_TASK_MONITOR_RegisterTask(TASKINFO_RUNNING_MSGRECEIVER, taskHandle);
     return 0;
 }
 
@@ -169,21 +104,10 @@ static void MsgReceiverTask(__attribute__((unused)) void *parameters)
     PathDesiredData pathDesired;
     PathDesiredGet(&pathDesired);
 
-
     portTickType readDelay = 10 / portTICK_RATE_MS;
     uint8_t BUFFER_SIZE = 128;
     char readBuffer[BUFFER_SIZE];
     uint16_t readSize;
-
-    // int loopCnt = 0;
-    // char writeBuffer[BUFFER_SIZE];
-    // writeBuffer[0] = 'H';
-    // writeBuffer[1] = 'E';
-    // writeBuffer[2] = 'L';
-    // writeBuffer[3] = 'L';
-    // writeBuffer[4] = 'O';
-    // writeBuffer[5] = '\0';
-    // PIOS_COM_SendBufferNonBlocking(comPortFlex, (uint8_t *)writeBuffer, strlen(writeBuffer));
 
     union Msg {
         struct MsgHeader header;

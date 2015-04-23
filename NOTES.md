@@ -38,11 +38,24 @@ Flashing firmware
 * Click on Flash button
 * After flash click Boot button
 
+## Compiling and Running GCS
+
+* To compile GCS
+
+    >> make gcs
+
+* Run
+
+    >> cd OpenPilot/build/openpilotgcs_release/bin
+    >> sudo ./openpilotgcs
+
 ## Creating new module
 
 * Add module to "madatory" (i.e. `MODULES += NewModule`) or "optional" (i.e. `OPTMODULES += NewModule`) modules list in the Makefile at
 
     `OpenPilot/flight/targets/boards/coptercontrol/firmware/Makefile`
+
+The Telemetry module should be last in the list.
 
 * Add the module to all the fields (i.e. `<elementname>NewModule</elementname>`) in the taskinfo.xml at
 
@@ -59,4 +72,8 @@ Flashing firmware
     `OpenPilot/flight/modules'
 
 * At the header and source files to the module folder.
+
+## Creating new UAVObject
+
+* UAVObject definitions are in `OpenPilot/shared/uavobjectdefinition`
 

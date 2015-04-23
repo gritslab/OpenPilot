@@ -44,6 +44,7 @@ MODULES += Receiver
 MODULES += ManualControl
 MODULES += FirmwareIAP
 MODULES += MsgReceiver
+MODULES += Test
 MODULES += Telemetry
 
 # List of optional modules to include
