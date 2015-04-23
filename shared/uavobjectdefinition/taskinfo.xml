@@ -18,7 +18,7 @@
 			<elementname>Altitude</elementname>
 			<elementname>Airspeed</elementname>
 			<elementname>MagBaro</elementname>
-			<elementname>MotionCapture</elementname>
+			<elementname>MsgReceiver</elementname>
 			<!-- navigation -->
 			<elementname>FlightPlan</elementname>
 			<!-- telemetry -->
@@ -50,7 +50,7 @@
 			<elementname>Altitude</elementname>
 			<elementname>Airspeed</elementname>
 			<elementname>MagBaro</elementname>
-			<elementname>MotionCapture</elementname>
+			<elementname>MsgReceiver</elementname>
 			<!-- navigation -->
 			<elementname>FlightPlan</elementname>
 			<!-- telemetry -->
@@ -86,7 +86,7 @@
 			<elementname>Altitude</elementname>
 			<elementname>Airspeed</elementname>
 			<elementname>MagBaro</elementname>
-			<elementname>MotionCapture</elementname>
+			<elementname>MsgReceiver</elementname>
 			<!-- navigation -->
 			<elementname>FlightPlan</elementname>
 			<!-- telemetry -->

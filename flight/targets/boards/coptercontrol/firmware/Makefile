@@ -43,7 +43,7 @@ MODULES += Actuator
 MODULES += Receiver
 MODULES += ManualControl
 MODULES += FirmwareIAP
-MODULES += MotionCapture
+MODULES += MsgReceiver
 MODULES += Telemetry
 
 # List of optional modules to include

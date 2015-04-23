@@ -1,4 +1,4 @@
-#include "inc/motioncapture.h"
+#include "inc/msgreceiver.h"
 
 #include <openpilot.h>
 #include "taskinfo.h"
@@ -13,7 +13,7 @@
 #define UPDATE_PERIOD_MS    5
 
 static xTaskHandle taskHandle;
-static void motionCaptureTask(void *parameters);
+static void MsgReceiverTask(void *parameters);
 
 static uint32_t comPortMain;
 static uint32_t comPortFlex;
@@ -121,19 +121,19 @@ bool parityCheck(uint8_t* msg, uint8_t msgSize)
     return (msgByte == parityByte);
 }
 
-int32_t MotiontCaptureStart(void)
+int32_t MsgReceiverStart(void)
 {
-    xTaskCreate(motionCaptureTask,
-                "MotiontCapture",
+    xTaskCreate(MsgReceiverTask,
+                "MsgReceiver",
                 STACK_SIZE_BYTES / 4,
                 NULL,
                 TASK_PRIORITY,
                 &taskHandle);
-    PIOS_TASK_MONITOR_RegisterTask(TASKINFO_RUNNING_MOTIONCAPTURE, taskHandle);
+    PIOS_TASK_MONITOR_RegisterTask(TASKINFO_RUNNING_MSGRECEIVER, taskHandle);
     return 0;
 }
 
-int32_t MotionCaptureInitialize(void)
+int32_t MsgReceiverInitialize(void)
 {
     PositionStateInitialize();
     PathDesiredInitialize();
@@ -158,9 +158,9 @@ int32_t MotionCaptureInitialize(void)
     return 0;
 }
 
-MODULE_INITCALL(MotionCaptureInitialize, MotiontCaptureStart);
+MODULE_INITCALL(MsgReceiverInitialize, MsgReceiverStart);
 
-static void motionCaptureTask(__attribute__((unused)) void *parameters)
+static void MsgReceiverTask(__attribute__((unused)) void *parameters)
 {
     // UAVObjects
     PositionStateData posState;
