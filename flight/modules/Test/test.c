@@ -4,9 +4,11 @@
 #include <pios_com.h>
 
 #include <manualcontrolcommand.h>
+#include "positionstate.h"
+#include "positiondesired.h"
 
 
-#define STACK_SIZE_BYTES 256
+#define STACK_SIZE_BYTES 520
 #define TASK_PRIORITY    (tskIDLE_PRIORITY + 1)
 #define UPDATE_PERIOD_MS    200
 
@@ -21,6 +23,8 @@ int32_t TestInitialize(void)
     PIOS_COM_ChangeBaud(comPortFlex, 115200);
 
     ManualControlCommandInitialize();
+    PositionStateInitialize();
+    PositionDesiredInitialize();
 
     return 0;
 }
@@ -41,26 +45,54 @@ MODULE_INITCALL(TestInitialize, TestStart);
 
 static void TestTask(__attribute__((unused)) void *parameters)
 {
-    uint8_t BUFFER_SIZE = 16;
-    char writeBuffer[BUFFER_SIZE];
+    char writeBuffer[32];
+    char tempBuffer[4];
+
 
     ManualControlCommandData cmd;
     ManualControlCommandGet(&cmd);
-    uint8_t position = cmd.FlightModeSwitchPosition;
+    uint8_t mode = cmd.FlightModeSwitchPosition;
+
+    PositionStateData pos;
+    PositionStateGet(&pos);
+
+    PositionDesiredData posDesired;
+    PositionDesiredGet(&posDesired);
 
     TickType_t lastWakeTime = xTaskGetTickCount();
     while (1) {
-        strcpy(writeBuffer,"Pos: ");
-        PIOS_COM_SendBufferNonBlocking(comPortFlex, (uint8_t *)writeBuffer, strlen(writeBuffer));
 
+        // Get control mode
         ManualControlCommandGet(&cmd);
-        position = cmd.FlightModeSwitchPosition;
-        intToStr(position, writeBuffer, 2);
+        mode = cmd.FlightModeSwitchPosition;
+        intToStr(mode, tempBuffer, 2);
+
+        strcpy(writeBuffer,"Mode: ");
+        strcat(writeBuffer, tempBuffer);
+        strcat(writeBuffer, "\n\r");
         PIOS_COM_SendBufferNonBlocking(comPortFlex, (uint8_t *)writeBuffer, strlen(writeBuffer));
 
-        strcpy(writeBuffer,"\n\r");
+        // Get position
+        PositionStateGet(&pos);
+
+        // strcpy(writeBuffer,"Pos: ");
+
+        ftoa(pos.North, writeBuffer, 2);
+        // strncat(writeBuffer, tempBuffer, 5);
+        // strcat(writeBuffer, ", ");
+
+        // ftoa(pos.East, tempBuffer, 2);
+        // strncat(writeBuffer, tempBuffer, 5);
+        // strcat(writeBuffer, ", ");
+
+        // ftoa(pos.Down, tempBuffer, 2);
+        // strncat(writeBuffer, tempBuffer, 5);
+        // strcat(writeBuffer, ", ");
+
         PIOS_COM_SendBufferNonBlocking(comPortFlex, (uint8_t *)writeBuffer, strlen(writeBuffer));
 
+
+        // Delay
         vTaskDelayUntil(&lastWakeTime, UPDATE_PERIOD_MS  / portTICK_RATE_MS);
     }
 
@@ -85,6 +117,10 @@ void reverse(char *str, int len)
 int intToStr(int x, char str[], int d)
 {
     int i = 0;
+    if (x < 0) {
+        str[i++] = '-';
+        x = -1*x;
+    }
     while (x)
     {
         str[i++] = (x%10) + '0';
@@ -101,28 +137,28 @@ int intToStr(int x, char str[], int d)
     return i;
 }
 
-// // Converts a floating point number to string.
-// void ftoa(float n, char *res, int afterpoint)
-// {
-//     // Extract integer part
-//     int ipart = (int)n;
+// Converts a floating point number to string.
+void ftoa(float n, char *res, int afterpoint)
+{
+    // Extract integer part
+    int ipart = (int)n;
 
-//     // Extract floating part
-//     float fpart = n - (float)ipart;
+    // Extract floating part
+    float fpart = n - (float)ipart;
 
-//     // convert integer part to string
-//     int i = intToStr(ipart, res, 0);
+    // convert integer part to string
+    int i = intToStr(ipart, res, 0);
 
-//     // check for display option after point
-//     if (afterpoint != 0)
-//     {
-//         res[i] = '.';  // add dot
+    // check for display option after point
+    if (afterpoint != 0)
+    {
+        res[i] = '.';  // add dot
 
-//         // Get the value of fraction part upto given no.
-//         // of points after dot. The third parameter is needed
-//         // to handle cases like 233.007
-//         fpart = fpart * powf(10, afterpoint);
+        // Get the value of fraction part upto given no.
+        // of points after dot. The third parameter is needed
+        // to handle cases like 233.007
+        fpart = fpart * powf(10, afterpoint);
 
-//         intToStr((int)fpart, res + i + 1, afterpoint);
-//     }
-// }
+        intToStr((int)fpart, res + i + 1, afterpoint);
+    }
+}

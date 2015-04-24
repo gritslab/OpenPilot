@@ -34,6 +34,16 @@
 #include <math.h>
 #include <stdint.h>
 
+static inline float deg2rad(float deg)
+{
+    return deg * M_PI_F / 180.0f;
+}
+
+static inline float rad2deg(float rad)
+{
+    return rad * 180.0f / M_PI_F;
+}
+
 // returns min(boundary1,boundary2) if val<min(boundary1,boundary2)
 // returns max(boundary1,boundary2) if val>max(boundary1,boundary2)
 // returns val if min(boundary1,boundary2)<=val<=max(boundary1,boundary2)
@@ -158,5 +168,45 @@ static inline float fastPow(float a, float b)
     u.x[0] = 0;
     return (float)u.d;
 }
+
+/**
+ * get euler angles from rotation matrix
+ */
+static inline void toEuler(float R[3][3], float* roll, float* pitch, float* yaw) {
+    *pitch = asinf(-R[2][0]);
+
+    if (fabsf(*pitch - M_PI_2_F) < 1.0e-3f) {
+        *roll = 0.0f;
+        *yaw = atan2f(R[1][2] - R[0][1], R[0][2] + R[1][1]) + *roll;
+
+    } else if (fabsf(*pitch + M_PI_2_F) < 1.0e-3f) {
+        *roll = 0.0f;
+        *yaw = atan2f(R[1][2] - R[0][1], R[0][2] + R[1][1]) - *roll;
+
+    } else {
+        *roll = atan2f(R[2][1], R[2][2]);
+        *yaw = atan2f(R[1][0], R[0][0]);
+    }
+}
+
+// /**
+//  * 3 x 3 Matrix multiplication
+//  * a x b = c
+//  */
+// static inline void mat3Mult(float a[3][3], float b[3][3], float c[3][3])
+// {
+//     c[0][0] = a[0][0]*b[0][0] + a[0][1]*b[1][0] + a[0][2]*b[2][0];
+//     c[0][1] = a[0][0]*b[0][1] + a[0][1]*b[1][1] + a[0][2]*b[2][1];
+//     c[0][2] = a[0][0]*b[0][2] + a[0][1]*b[1][2] + a[0][2]*b[2][2];
+
+//     c[1][0] = a[1][0]*b[0][0] + a[1][1]*b[1][0] + a[1][2]*b[2][0];
+//     c[1][1] = a[1][0]*b[0][1] + a[1][1]*b[1][1] + a[1][2]*b[2][1];
+//     c[1][2] = a[1][0]*b[0][2] + a[1][1]*b[1][2] + a[1][2]*b[2][2];
+
+//     c[2][0] = a[2][0]*b[0][0] + a[2][1]*b[1][0] + a[2][2]*b[2][0];
+//     c[2][1] = a[2][0]*b[0][1] + a[2][1]*b[1][1] + a[2][2]*b[2][1];
+//     c[2][2] = a[2][0]*b[0][2] + a[2][1]*b[1][2] + a[2][2]*b[2][2];
+// }
+
 
 #endif /* MATHMISC_H */

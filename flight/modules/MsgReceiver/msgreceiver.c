@@ -3,12 +3,11 @@
 #include <openpilot.h>
 #include "taskinfo.h"
 #include "positionstate.h"
-#include "pathdesired.h"
-#include "homelocation.h"
+#include "positiondesired.h"
 
 #include <pios_com.h>
 
-#define STACK_SIZE_BYTES 512
+#define STACK_SIZE_BYTES 280
 #define TASK_PRIORITY    (tskIDLE_PRIORITY + 1)
 #define UPDATE_PERIOD_MS    5
 
@@ -62,17 +61,7 @@ bool parityCheck(uint8_t* msg, uint8_t msgSize)
 int32_t MsgReceiverInitialize(void)
 {
     PositionStateInitialize();
-    PathDesiredInitialize();
-
-    // Set home location
-    HomeLocationInitialize();
-    HomeLocationData home;
-    HomeLocationGet(&home);
-    home.Latitude = 0;
-    home.Longitude = 0;
-    home.Altitude = 0;
-    home.Set = HOMELOCATION_SET_TRUE;
-    HomeLocationSet(&home);
+    PositionDesiredInitialize();
 
     // Set port
     comPortMain = PIOS_COM_GPS;
@@ -101,11 +90,11 @@ static void MsgReceiverTask(__attribute__((unused)) void *parameters)
     PositionStateData posState;
     PositionStateGet(&posState);
 
-    PathDesiredData pathDesired;
-    PathDesiredGet(&pathDesired);
+    PositionDesiredData pathDesired;
+    PositionDesiredGet(&pathDesired);
 
     portTickType readDelay = 10 / portTICK_RATE_MS;
-    uint8_t BUFFER_SIZE = 128;
+    uint8_t BUFFER_SIZE = 32;
     char readBuffer[BUFFER_SIZE];
     uint16_t readSize;
 
@@ -149,11 +138,11 @@ static void MsgReceiverTask(__attribute__((unused)) void *parameters)
                             if (msgByteInd >= sizeof(msg.posDesired)) {
                                 msgMarkerFlag = false;
                                 if (parityCheck((uint8_t *)&msg, sizeof(msg))) {
-                                    pathDesired.End.North = msg.posDesired.x;
-                                    pathDesired.End.East = msg.posDesired.y;
-                                    pathDesired.End.Down = msg.posDesired.z;
+                                    pathDesired.North = msg.posDesired.x;
+                                    pathDesired.East = msg.posDesired.y;
+                                    pathDesired.Down = msg.posDesired.z;
 
-                                    PathDesiredSet(&pathDesired);
+                                    PositionDesiredSet(&pathDesired);
                                 }
                             }
                         } else {

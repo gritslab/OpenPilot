@@ -49,6 +49,15 @@ Flashing firmware
     >> cd OpenPilot/build/openpilotgcs_release/bin
     >> sudo ./openpilotgcs
 
+## Adding new UAVObject
+
+* Create new UAVObject xml file in `OpenPilot/shared/uavobjectdefinition`
+* Add .h and .cpp file to `OpenPilot/ground/openpilotgcs/src/plugins/uavobjects/uavobjects.pro`
+* Recompile GCS
+
+    >> make gcs
+
+
 ## Creating new module
 
 * Add module to "madatory" (i.e. `MODULES += NewModule`) or "optional" (i.e. `OPTMODULES += NewModule`) modules list in the Makefile at

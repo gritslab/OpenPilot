@@ -44,7 +44,8 @@ MODULES += Receiver
 MODULES += ManualControl
 MODULES += FirmwareIAP
 MODULES += MsgReceiver
-MODULES += Test
+MODULES += PositionControl
+# MODULES += Test
 MODULES += Telemetry
 
 # List of optional modules to include
@@ -131,6 +132,8 @@ ifndef TESTAPP
     SRC += $(OPUAVSYNTHDIR)/positionstate.c
     SRC += $(OPUAVSYNTHDIR)/homelocation.c
     SRC += $(OPUAVSYNTHDIR)/pathdesired.c
+    SRC += $(OPUAVSYNTHDIR)/positiondesired.c
+    SRC += $(OPUAVSYNTHDIR)/velocitydesired.c
     # Command line option for Gcsreceiver module
     ifeq ($(GCSRECEIVER), YES)
         SRC += $(OPUAVSYNTHDIR)/gcsreceiver.c
