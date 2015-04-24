@@ -78,6 +78,11 @@ void stabilizedHandler(bool newinit)
     ManualControlCommandData cmd;
     ManualControlCommandGet(&cmd);
 
+    // XXX
+    if (cmd.FlightModeSwitchPosition == 1) {
+        return;
+    }
+
     FlightModeSettingsData settings;
     FlightModeSettingsGet(&settings);
 
