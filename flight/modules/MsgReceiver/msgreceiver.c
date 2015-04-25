@@ -1,13 +1,17 @@
 #include "inc/msgreceiver.h"
 
 #include <openpilot.h>
-#include "taskinfo.h"
-#include "positionstate.h"
-#include "positiondesired.h"
-
+#include <taskinfo.h>
 #include <pios_com.h>
+#include <CoordinateConversions.h>
 
-#define STACK_SIZE_BYTES 280
+#include <motioncapture.h>
+#include <positionstate.h>
+#include <positiondesired.h>
+
+
+
+#define STACK_SIZE_BYTES 380
 #define TASK_PRIORITY    (tskIDLE_PRIORITY + 1)
 #define UPDATE_PERIOD_MS    5
 
@@ -60,6 +64,7 @@ bool parityCheck(uint8_t* msg, uint8_t msgSize)
 
 int32_t MsgReceiverInitialize(void)
 {
+    MotionCaptureInitialize();
     PositionStateInitialize();
     PositionDesiredInitialize();
 
@@ -87,6 +92,8 @@ MODULE_INITCALL(MsgReceiverInitialize, MsgReceiverStart);
 static void MsgReceiverTask(__attribute__((unused)) void *parameters)
 {
     // UAVObjects
+    MotionCaptureData motion;
+
     PositionStateData posState;
     PositionStateGet(&posState);
 
@@ -132,6 +139,13 @@ static void MsgReceiverTask(__attribute__((unused)) void *parameters)
                                     posState.Down = msg.pos.z;
 
                                     PositionStateSet(&posState);
+
+                                    motion.North = msg.pos.x;
+                                    motion.East = msg.pos.y;
+                                    motion.Down = msg.pos.z;
+                                    motion.Yaw = msg.pos.yaw;
+                                    MotionCaptureSet(&motion);
+
                                 }
                             }
                         } else if (msg.header.type == POSITION_DESIRED) {

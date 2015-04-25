@@ -60,6 +60,7 @@
 #include "accelgyrosettings.h"
 #include "flightstatus.h"
 #include "manualcontrolcommand.h"
+#include "motioncapture.h"
 #include "taskinfo.h"
 
 #include <pios_sensors.h>
@@ -195,6 +196,7 @@ int32_t AttitudeInitialize(void)
     AccelGyroSettingsInitialize();
     AccelStateInitialize();
     GyroStateInitialize();
+    MotionCaptureInitialize();
 
     // Initialize quaternion
     AttitudeStateData attitude;
@@ -709,6 +711,22 @@ __attribute__((optimize("O3"))) static void updateAttitude(AccelStateData *accel
 
     // Convert into eueler degrees (makes assumptions about RPY order)
     Quaternion2RPY(&attitudeState.q1, &attitudeState.Roll);
+
+    AttitudeStateSet(&attitudeState);
+
+    MotionCaptureData motion;
+    MotionCaptureGet(&motion);
+
+    attitudeState.Yaw = motion.Yaw;
+    float rpy[3];
+    rpy[0] = attitudeState.Roll;
+    rpy[1] = attitudeState.Pitch;
+    rpy[2] = attitudeState.Yaw;
+    RPY2Quaternion(rpy, q);
+    attitudeState.q1 = q[0];
+    attitudeState.q2 = q[1];
+    attitudeState.q3 = q[2];
+    attitudeState.q4 = q[3];
 
     AttitudeStateSet(&attitudeState);
 }

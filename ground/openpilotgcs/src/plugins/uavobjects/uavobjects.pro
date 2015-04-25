@@ -87,6 +87,7 @@ HEADERS += \
     $$UAVOBJECT_SYNTHETICS/gpsvelocitysensor.h \
     $$UAVOBJECT_SYNTHETICS/positiondesired.h \
     $$UAVOBJECT_SYNTHETICS/positionstate.h \
+    $$UAVOBJECT_SYNTHETICS/motioncapture.h \
     $$UAVOBJECT_SYNTHETICS/flightbatterystate.h \
     $$UAVOBJECT_SYNTHETICS/homelocation.h \
     $$UAVOBJECT_SYNTHETICS/mixersettings.h \
@@ -194,6 +195,7 @@ SOURCES += \
     $$UAVOBJECT_SYNTHETICS/gpsvelocitysensor.cpp \
     $$UAVOBJECT_SYNTHETICS/positiondesired.cpp \
     $$UAVOBJECT_SYNTHETICS/positionstate.cpp \
+    $$UAVOBJECT_SYNTHETICS/motioncapture.cpp \
     $$UAVOBJECT_SYNTHETICS/flightbatterystate.cpp \
     $$UAVOBJECT_SYNTHETICS/homelocation.cpp \
     $$UAVOBJECT_SYNTHETICS/mixersettings.cpp \

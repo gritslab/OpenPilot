@@ -55,6 +55,7 @@ Flashing firmware
 * Add .h and .cpp file to `OpenPilot/ground/openpilotgcs/src/plugins/uavobjects/uavobjects.pro`
 * Recompile GCS
 
+    >> make uavobjects
     >> make gcs
 
 
