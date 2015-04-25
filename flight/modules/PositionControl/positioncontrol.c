@@ -4,9 +4,9 @@
 #include <pios_com.h>
 #include <mathmisc.h>
 
-#define STACK_SIZE_BYTES 512
+#define STACK_SIZE_BYTES 612
 #define TASK_PRIORITY    (tskIDLE_PRIORITY + 1)
-#define UPDATE_PERIOD_MS    10
+#define UPDATE_PERIOD_MS    100
 
 #define GRAVITY 9.80665f
 #define MASS 1.0f
@@ -179,18 +179,37 @@ static void PositionControlTask(__attribute__((unused)) void *parameters)
     pid_zero(&posPid[1]);
     pid_zero(&posPid[2]);
 
-    pid_configure(&posPid[0], 1, 0, 0, 0);
-    pid_configure(&posPid[1], 1, 0, 0, 0);
-    pid_configure(&posPid[2], 1, 0, 0, 0);
+    pid_configure(&posPid[0], 10.0f, 0.1f, 0.1f, 0);
+    pid_configure(&posPid[1], 10.0f, 0.1f, 0.1f, 0);
+    pid_configure(&posPid[2], 10.0f, 0.1f, 0.1f, 0);
 
     ManualControlCommandData cmd;
+
+    StabilizationDesiredData att;
+    float prevYaw = 0;
+    float prevThrust = 0;
+
+    PositionStateData pos;
+
+    PositionDesiredData posDesired;
 
     TickType_t lastWakeTime = xTaskGetTickCount();
     while (1) {
         ManualControlCommandGet(&cmd);
+        PositionStateGet(&pos);
+        // PositionDesiredGet(&posDesired);
 
         if (cmd.FlightModeSwitchPosition == 1) {
-            performControl(posPid);
+            att.Yaw = prevYaw;
+            att.Thrust = prevThrust;
+            performControl(posPid, &att, &pos, &posDesired);
+        } else {
+            StabilizationDesiredGet(&att);
+            prevYaw = att.Yaw;
+            prevThrust = att.Thrust;
+            posDesired.North = pos.North;
+            posDesired.East = pos.East;
+            posDesired.Down = pos.Down;
         }
 
         // Delay
@@ -199,26 +218,24 @@ static void PositionControlTask(__attribute__((unused)) void *parameters)
 
 }
 
-void performControl(struct pid *posPid)
+void performControl(struct pid *posPid,
+                    StabilizationDesiredData* att,
+                    PositionStateData* pos,
+                    PositionDesiredData* posDesired)
 {
-    PositionStateData pos;
-    PositionStateGet(&pos);
-
-    PositionDesiredData posDesired;
-    PositionDesiredGet(&posDesired);
-
-    StabilizationDesiredData att;
-
     float dt = UPDATE_PERIOD_MS / 1000.0f;
 
     float f[3];
-    f[0] = pid_apply(&(posPid[0]), posDesired.North - pos.North, dt) * MASS;
-    f[1] = pid_apply(&(posPid[1]), posDesired.East - pos.East, dt) * MASS;
-    f[2] = pid_apply(&(posPid[2]), posDesired.Down - pos.Down, dt) * MASS;
-    f[2] -= GRAVITY*MASS;
+    f[0] = pid_apply(&(posPid[0]), posDesired->North - pos->North, dt) * MASS;
+    f[1] = pid_apply(&(posPid[1]), posDesired->East - pos->East, dt) * MASS;
+    f[2] = pid_apply(&(posPid[2]), posDesired->Down - pos->Down, dt) * MASS;
+    // f[2] -= GRAVITY*MASS;
+    float thrust = att->Thrust * FORCE_MAX;
+    thrust = thrust > 0 ? thrust : 0;
+    f[2] -= thrust;
 
-    calcAttFromForceVec(f, 0, &att);
-    StabilizationDesiredSet(&att);
+    calcAttFromForceVec(f, att->Yaw, att);
+    StabilizationDesiredSet(att);
 
 // #ifdef DEBUG
 //     char buffer[16];

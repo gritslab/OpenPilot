@@ -12,8 +12,13 @@
 int32_t PositionControlStart(void);
 int32_t PositionControlInitialize(void);
 
-void performControl(struct pid *posPid);
-void calcAttFromForceVec(float f[3], float yawDesired, StabilizationDesiredData* att);
+void performControl(struct pid *posPid,
+                    StabilizationDesiredData* att,
+                    PositionStateData* pos,
+                    PositionDesiredData* posDesired);
+void calcAttFromForceVec(float f[3],
+                         float yawDesired,
+                         StabilizationDesiredData* att);
 float forceNorm2thrustPercentage(float f);
 
 #endif // POSITIONCONTROL_H
