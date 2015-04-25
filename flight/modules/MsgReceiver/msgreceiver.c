@@ -65,7 +65,7 @@ int32_t MsgReceiverInitialize(void)
 
     // Set port
     comPortMain = PIOS_COM_GPS;
-    PIOS_COM_ChangeBaud(comPortMain, 115200);
+    PIOS_COM_ChangeBaud(comPortMain, 57600);
 
     return 0;
 }
