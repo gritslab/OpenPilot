@@ -8,6 +8,7 @@
 #include <positionstate.h>
 #include <positiondesired.h>
 #include <stabilizationdesired.h>
+#include <attitudestate.h>
 
 int32_t PositionControlStart(void);
 int32_t PositionControlInitialize(void);

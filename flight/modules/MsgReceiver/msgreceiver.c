@@ -144,6 +144,7 @@ static void MsgReceiverTask(__attribute__((unused)) void *parameters)
                                     motion.East = msg.pos.y;
                                     motion.Down = msg.pos.z;
                                     motion.Yaw = msg.pos.yaw;
+
                                     MotionCaptureSet(&motion);
 
                                 }

@@ -712,7 +712,7 @@ __attribute__((optimize("O3"))) static void updateAttitude(AccelStateData *accel
     // Convert into eueler degrees (makes assumptions about RPY order)
     Quaternion2RPY(&attitudeState.q1, &attitudeState.Roll);
 
-    AttitudeStateSet(&attitudeState);
+    // AttitudeStateSet(&attitudeState);
 
     MotionCaptureData motion;
     MotionCaptureGet(&motion);
