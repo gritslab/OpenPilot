@@ -39,9 +39,6 @@
 #include <receiveractivity.h>
 #include <flightstatus.h>
 #include <flighttelemetrystats.h>
-#ifndef PIOS_EXCLUDE_ADVANCED_FEATURES
-#include <stabilizationsettings.h>
-#endif
 #include <flightmodesettings.h>
 #include <systemsettings.h>
 #include <taskinfo.h>
@@ -84,10 +81,6 @@ static float scaleChannel(int16_t value, int16_t max, int16_t min, int16_t neutr
 static uint32_t timeDifferenceMs(portTickType start_time, portTickType end_time);
 static bool validInputRange(int16_t min, int16_t max, uint16_t value);
 static void applyDeadband(float *value, float deadband);
-
-#ifndef PIOS_EXCLUDE_ADVANCED_FEATURES
-static uint8_t isAssistedFlightMode(uint8_t position);
-#endif
 
 #ifdef USE_INPUT_LPF
 static void applyLPF(float *value, ManualControlSettingsResponseTimeElem channel, ManualControlSettingsResponseTimeData *responseTime, float deadband, float dT);
@@ -139,9 +132,6 @@ int32_t ReceiverInitialize()
     ManualControlCommandInitialize();
     ReceiverActivityInitialize();
     ManualControlSettingsInitialize();
-#ifndef PIOS_EXCLUDE_ADVANCED_FEATURES
-    StabilizationSettingsInitialize();
-#endif
 
 
     return 0;
@@ -378,23 +368,6 @@ static void receiverTask(__attribute__((unused)) void *parameters)
             }
 
             float deadband_checked = settings.Deadband;
-#ifndef PIOS_EXCLUDE_ADVANCED_FEATURES
-            // AssistedControl must have deadband set for pitch/roll hence
-            // we default to a higher value for badly behaved TXs and also enforce a minimum value
-            // for well behaved TXs
-            uint8_t assistedMode = isAssistedFlightMode(cmd.FlightModeSwitchPosition);
-            if (assistedMode) {
-                deadband_checked = settings.DeadbandAssistedControl;
-                if (deadband_checked < ASSISTEDCONTROL_DEADBAND_MINIMUM) {
-                    deadband_checked = ASSISTEDCONTROL_DEADBAND_MINIMUM;
-                }
-
-                // If user has set settings.Deadband to a higher value...we use that.
-                if (deadband_checked < settings.Deadband) {
-                    deadband_checked = settings.Deadband;
-                }
-            }
-#endif // PIOS_EXCLUDE_ADVANCED_FEATURES
 
             // Apply deadband for Roll/Pitch/Yaw stick inputs
             if (deadband_checked > 0.0f) {
@@ -710,26 +683,3 @@ static void applyLPF(float *value, ManualControlSettingsResponseTimeElem channel
 }
 #endif // USE_INPUT_LPF
 
-/**
- * Check and set modes for gps assisted stablised flight modes
- */
-#ifndef PIOS_EXCLUDE_ADVANCED_FEATURES
-static uint8_t isAssistedFlightMode(uint8_t position)
-{
-    uint8_t isAssistedFlag = STABILIZATIONSETTINGS_FLIGHTMODEASSISTMAP_NONE;
-    uint8_t FlightModeAssistMap[STABILIZATIONSETTINGS_FLIGHTMODEASSISTMAP_NUMELEM];
-
-    StabilizationSettingsFlightModeAssistMapGet(FlightModeAssistMap);
-
-    if (position < STABILIZATIONSETTINGS_FLIGHTMODEASSISTMAP_NUMELEM) {
-        isAssistedFlag = FlightModeAssistMap[position];
-    }
-
-    return isAssistedFlag;
-}
-#endif
-
-/**
- * @}
- * @}
- */
