@@ -257,59 +257,61 @@ static uint32_t timeDifferenceMs(portTickType start_time, portTickType end_time)
  */
 static bool okToArm(void)
 {
-    // update checks
-    configuration_check();
 
-    // read alarms
-    SystemAlarmsData alarms;
+    return true;
+    // // update checks
+    // configuration_check();
 
-    SystemAlarmsGet(&alarms);
+    // // read alarms
+    // SystemAlarmsData alarms;
 
-    // Check each alarm
-    for (int i = 0; i < SYSTEMALARMS_ALARM_NUMELEM; i++) {
-        if (SystemAlarmsAlarmToArray(alarms.Alarm)[i] >= SYSTEMALARMS_ALARM_CRITICAL) { // found an alarm thats set
-            if (i == SYSTEMALARMS_ALARM_GPS || i == SYSTEMALARMS_ALARM_TELEMETRY) {
-                continue;
-            }
+    // SystemAlarmsGet(&alarms);
 
-            return false;
-        }
-    }
+    // // Check each alarm
+    // for (int i = 0; i < SYSTEMALARMS_ALARM_NUMELEM; i++) {
+    //     if (SystemAlarmsAlarmToArray(alarms.Alarm)[i] >= SYSTEMALARMS_ALARM_CRITICAL) { // found an alarm thats set
+    //         if (i == SYSTEMALARMS_ALARM_GPS || i == SYSTEMALARMS_ALARM_TELEMETRY) {
+    //             continue;
+    //         }
 
-    StabilizationDesiredStabilizationModeData stabDesired;
+    //         return false;
+    //     }
+    // }
 
-    FlightStatusData flightStatus;
-    FlightStatusGet(&flightStatus);
-    switch (flightStatus.FlightMode) {
-    case FLIGHTSTATUS_FLIGHTMODE_MANUAL:
-    case FLIGHTSTATUS_FLIGHTMODE_STABILIZED1:
-    case FLIGHTSTATUS_FLIGHTMODE_STABILIZED2:
-    case FLIGHTSTATUS_FLIGHTMODE_STABILIZED3:
-    case FLIGHTSTATUS_FLIGHTMODE_STABILIZED4:
-    case FLIGHTSTATUS_FLIGHTMODE_STABILIZED5:
-    case FLIGHTSTATUS_FLIGHTMODE_STABILIZED6:
-        // Prevent arming if unsafe due to the current Thrust Mode
-        StabilizationDesiredStabilizationModeGet(&stabDesired);
-        if (stabDesired.Thrust == STABILIZATIONDESIRED_STABILIZATIONMODE_ALTITUDEHOLD ||
-            stabDesired.Thrust == STABILIZATIONDESIRED_STABILIZATIONMODE_ALTITUDEVARIO) {
-            return false;
-        }
+    // StabilizationDesiredStabilizationModeData stabDesired;
 
-        // avoid assisted control with auto throttle.  As it sits waiting to launch,
-        // it will move to hold, and auto thrust will auto launch otherwise!
-        if (flightStatus.FlightModeAssist == FLIGHTSTATUS_FLIGHTMODEASSIST_GPSASSIST) {
-            return false;
-        }
+    // FlightStatusData flightStatus;
+    // FlightStatusGet(&flightStatus);
+    // switch (flightStatus.FlightMode) {
+    // case FLIGHTSTATUS_FLIGHTMODE_MANUAL:
+    // case FLIGHTSTATUS_FLIGHTMODE_STABILIZED1:
+    // case FLIGHTSTATUS_FLIGHTMODE_STABILIZED2:
+    // case FLIGHTSTATUS_FLIGHTMODE_STABILIZED3:
+    // case FLIGHTSTATUS_FLIGHTMODE_STABILIZED4:
+    // case FLIGHTSTATUS_FLIGHTMODE_STABILIZED5:
+    // case FLIGHTSTATUS_FLIGHTMODE_STABILIZED6:
+    //     // Prevent arming if unsafe due to the current Thrust Mode
+    //     StabilizationDesiredStabilizationModeGet(&stabDesired);
+    //     if (stabDesired.Thrust == STABILIZATIONDESIRED_STABILIZATIONMODE_ALTITUDEHOLD ||
+    //         stabDesired.Thrust == STABILIZATIONDESIRED_STABILIZATIONMODE_ALTITUDEVARIO) {
+    //         return false;
+    //     }
 
-        return true;
+    //     // avoid assisted control with auto throttle.  As it sits waiting to launch,
+    //     // it will move to hold, and auto thrust will auto launch otherwise!
+    //     if (flightStatus.FlightModeAssist == FLIGHTSTATUS_FLIGHTMODEASSIST_GPSASSIST) {
+    //         return false;
+    //     }
 
-        break;
+    //     return true;
 
-    default:
-        return false;
+    //     break;
 
-        break;
-    }
+    // default:
+    //     return false;
+
+    //     break;
+    // }
 }
 /**
  * @brief Determine if the aircraft is forced to disarm by an explicit alarm
