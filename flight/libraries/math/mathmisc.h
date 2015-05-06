@@ -175,14 +175,9 @@ static inline float fastPow(float a, float b)
 static inline void toEuler(float R[3][3], float* roll, float* pitch, float* yaw) {
     *pitch = asinf(-R[2][0]);
 
-    if (fabsf(*pitch - M_PI_2_F) < 1.0e-3f) {
+    if (fabsf(fabsf(*pitch) - M_PI_2_F) < 1.0e-3f) {
         *roll = 0.0f;
-        *yaw = atan2f(R[1][2] - R[0][1], R[0][2] + R[1][1]) + *roll;
-
-    } else if (fabsf(*pitch + M_PI_2_F) < 1.0e-3f) {
-        *roll = 0.0f;
-        *yaw = atan2f(R[1][2] - R[0][1], R[0][2] + R[1][1]) - *roll;
-
+        *yaw = atan2f(R[1][2] - R[0][1], R[0][2] + R[1][1]);
     } else {
         *roll = atan2f(R[2][1], R[2][2]);
         *yaw = atan2f(R[1][0], R[0][0]);

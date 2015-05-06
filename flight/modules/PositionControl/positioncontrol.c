@@ -10,137 +10,13 @@
 
 #define GRAVITY 9.80665f
 #define MASS 1.0f
-#define FORCE_MAX 15.0f
-
-// #define DEBUG
+#define MAX_FORCE 15.0f // [N] max force from all 4 motors
+#define MAX_BANK_ANG 0.2618f // [radians] (15 degrees)
+#define MAX_Z_ACC 2.0f // [m/s^2]
+#define EPSILON 1.0e-3f // size of zero ball
 
 static xTaskHandle taskHandle;
 static void PositionControlTask(void *parameters);
-
-
-#ifdef DEBUG
-static uint32_t comPortFlex;
-
-// reverses a string 'str' of length 'len'
-void reverse(char *str, int len)
-{
-    int i=0, j=len-1, temp;
-    while (i<j)
-    {
-        temp = str[i];
-        str[i] = str[j];
-        str[j] = temp;
-        i++; j--;
-    }
-}
-
-int int2str(int x, char str[], int d)
-{
-    int i = 0;
-    bool isNeg = false;
-    if (x < 0) {
-        isNeg = true;
-        x = -1*x;
-    }
-    while (x)
-    {
-        str[i++] = (x%10) + '0';
-        x = x/10;
-    }
-
-    // If number of digits required is more, then
-    // add 0s at the beginning
-    while (i < d)
-        str[i++] = '0';
-
-    if (isNeg) {
-        str[i++] = '-';
-    }
-    reverse(str, i);
-    str[i] = '\0';
-    return i;
-}
-
-// Converts a floating point number to string.
-void float2str(float x, char *str, int afterpoint)
-{
-    bool isNeg = false;
-    if (x < 0) {
-        isNeg = true;
-        x = -1*x;
-    }
-
-    // Extract integer part
-    int ipart = (int)x;
-
-    // Extract floating part
-    float fpart = x - (float)ipart;
-
-    // convert integer part to string
-    int i = int2str(ipart, str, 0);
-
-    // check for display option after point
-    if (afterpoint != 0)
-    {
-        if (isNeg){
-            str[i++] = '-';
-        }
-        str[i] = '.';  // add dot
-
-        // Get the value of fraction part upto given no.
-        // of points after dot. The third parameter is needed
-        // to handle cases like 233.007
-        fpart = fpart * powf(10, afterpoint);
-
-        int2str((int)fpart, str + i + 1, afterpoint);
-    }
-}
-
-void print(char* buffer)
-{
-    PIOS_COM_SendBuffer(comPortFlex,
-                                   (uint8_t*)buffer,
-                                   strlen(buffer));
-}
-
-void println(char* buffer)
-{
-    strcat(buffer, "\n\r");
-    print(buffer);
-}
-
-void printVec(float vec[3])
-{
-    char buffer[16];
-
-    for (int i=0; i<3; ++i) {
-        float2str(vec[i], buffer, 2);
-        strcat(buffer, ", ");
-        print(buffer);
-    }
-    strcpy(buffer," ");
-    println(buffer);
-}
-
-void printMat(float mat[3][3])
-{
-    char buffer[16];
-
-    for (int i=0; i<3; ++i) {
-        for (int j=0; j<3; ++j) {
-            float2str(mat[i][j], buffer, 2);
-            strcat(buffer, ", ");
-            print(buffer);
-        }
-        strcpy(buffer," ");
-        println(buffer);
-    }
-    strcpy(buffer," ");
-    println(buffer);
-}
-
-#endif
-
 
 int32_t PositionControlInitialize(void)
 {
@@ -148,11 +24,6 @@ int32_t PositionControlInitialize(void)
     PositionStateInitialize();
     PositionDesiredInitialize();
     StabilizationDesiredInitialize();
-
-#ifdef DEBUG
-    comPortFlex = PIOS_COM_TELEM_RF;
-    PIOS_COM_ChangeBaud(comPortFlex, 115200);
-#endif
 
     return 0;
 }
@@ -188,8 +59,7 @@ static void PositionControlTask(__attribute__((unused)) void *parameters)
     AttitudeStateData att;
     StabilizationDesiredData attDesired;
 
-    float prevYaw = 0;
-    float prevThrust = 0;
+    // float up_thrust = 0.0f;
 
     PositionStateData pos;
     PositionDesiredData posDesired;
@@ -201,14 +71,16 @@ static void PositionControlTask(__attribute__((unused)) void *parameters)
         // PositionDesiredGet(&posDesired);
 
         if (cmd.FlightModeSwitchPosition == 1) {
-            attDesired.Yaw = prevYaw;
-            attDesired.Thrust = prevThrust;
-            performControl(posPid, &attDesired, &pos, &posDesired);
+            // performControl(posPid, &pos, &posDesired, &up_thrust, &attDesired);
+            attDesired.Roll = 1.0f;
+            attDesired.Pitch = 2.0f;
+            attDesired.Yaw = 3.0f;
+            StabilizationDesiredSet(&attDesired);
         } else {
             AttitudeStateGet(&att);
             StabilizationDesiredGet(&attDesired);
-            prevYaw = att.Yaw;
-            prevThrust = cmd.Thrust;
+            // up_thrust = cmd.Thrust;
+            attDesired.Yaw = att.Yaw;
             posDesired.North = pos.North;
             posDesired.East = pos.East;
             posDesired.Down = pos.Down;
@@ -222,102 +94,83 @@ static void PositionControlTask(__attribute__((unused)) void *parameters)
 }
 
 void performControl(struct pid *posPid,
-                    StabilizationDesiredData* attDesired,
                     PositionStateData* pos,
-                    PositionDesiredData* posDesired)
+                    PositionDesiredData* posDesired,
+                    float* up_thrust,
+                    StabilizationDesiredData* att)
 {
+    // Calculate force vector from PID gains and error vector
     float dt = UPDATE_PERIOD_MS / 1000.0f;
-
     float f[3];
     f[0] = pid_apply(&(posPid[0]), posDesired->North - pos->North, dt) * MASS;
     f[1] = pid_apply(&(posPid[1]), posDesired->East - pos->East, dt) * MASS;
     f[2] = pid_apply(&(posPid[2]), posDesired->Down - pos->Down, dt) * MASS;
+
+    // Constrain z force to acceleration constrains
+    if (fabsf(f[2] / MASS) > MAX_Z_ACC) {
+        f[2] = f[2] / fabsf(f[2] / MASS) * MAX_Z_ACC;
+    }
+
+    // Add in necessary z force to counteract gravity
     // f[2] -= GRAVITY*MASS;
-    float thrust = attDesired->Thrust * FORCE_MAX;
-    thrust = thrust > 0 ? thrust : 0;
-    f[2] -= thrust;
+    f[2] -= (*up_thrust > 0 ? *up_thrust : 0) * MAX_FORCE;
 
-    calcAttFromForceVec(f, attDesired->Yaw, attDesired);
-    StabilizationDesiredSet(attDesired);
+    // Constrain magnitude of force in the xy direction to maximum bank angle
+    float fxy = 1 / fast_invsqrtf(f[0]*f[0] + f[1]*f[1]);
+    if (atan2f(fxy,-f[2]) > MAX_BANK_ANG) {
+        f[0] = -f[2]*tanf(MAX_BANK_ANG)/fxy*f[0];
+        f[1] = -f[2]*tanf(MAX_BANK_ANG)/fxy*f[1];
+        fxy = 1 / fast_invsqrtf(f[0]*f[0] + f[1]*f[1]);
+    }
 
-// #ifdef DEBUG
-//     char buffer[16];
+    // Constrain norm of force in the max force
+    float f_norm = vector_lengthf(f, 3);
+    if (f_norm > MAX_FORCE) {
+        float fxy_scale = 1 / (fxy*fast_invsqrtf(MAX_FORCE*MAX_FORCE - f[2]*f[2]));
+        f[0] = fxy_scale * f[0];
+        f[1] = fxy_scale * f[1];
+        f_norm = MAX_FORCE;
+    }
 
-//     for (int i=0; i<3; ++i) {
-//         float2str(f[i], buffer, 2);
-//         strcat(buffer, ", ");
-//         print(buffer);
-//     }
-//     strcpy(buffer," ");
-//     println(buffer);
-// #endif
-
-// #ifdef DEBUG
-    // char buffer[16];
-    // float2str(att.Roll, buffer, 2);
-    // strcat(buffer, ", ");
-    // print(buffer);
-    // float2str(att.Pitch, buffer, 2);
-    // strcat(buffer, ", ");
-    // print(buffer);
-    // float2str(att.Yaw, buffer, 2);
-    // strcat(buffer, ", ");
-    // print(buffer);
-    // float2str(att.Thrust, buffer, 2);
-    // println(buffer);
-// #endif
-
-
-}
-
-void calcAttFromForceVec(float f[3], float yaw, StabilizationDesiredData* att)
-{
-    float eps = 1.0e-3f; // Size of closeness ball
-
-    float fNorm = vector_lengthf(f, 3);
-
-    if (fNorm < eps) {
-        att->Roll = rad2deg(0);
-        att->Pitch = rad2deg(0);
-        att->Yaw = yaw;
-        att->Thrust = forceNorm2thrustPercentage(fNorm);
+    // Case 1: Force is straight up
+    if (f_norm < EPSILON) {
+        att->Roll = 0.0f;
+        att->Pitch = 0.0f;
+        att->Thrust = forceNorm2thrustPercentage(f_norm);
         return;
     }
 
+    // Case 2: Force not straight up
+    float yaw = deg2rad(att->Yaw);
     float X[3];
     float Y[3];
     float Z[3] = {-f[0], -f[1], -f[2]};
+
+    // Solve for Z axis of rotation matrix
     vector_normalizef(Z, 3);
 
-    // Solve for Y axis
-    float a = -Z[0]*sinf(yaw) + Z[1]*cosf(yaw);
-
-    float d;
-    if (a < eps && a > -eps) {
-        Y[2] = 0.0f;
-        d = sqrtf(1 - powf(Y[2], 2));
-        Y[0] = -d*sinf(yaw);
-        Y[1] = d*cosf(yaw);
+    // Solve for X axis of rotation matrix
+    float a = Z[0]*cosf(yaw) + Z[1]*sinf(yaw);
+    if (fabsf(a) < EPSILON) {
+        X[0] = cosf(yaw);
+        X[1] = sinf(yaw);
+        X[2] = 0.0f;
     } else {
-        Y[2] = sqrtf(1 / ( powf(Z[2]/a,2) + 1) );
-        d = sqrtf(1 - powf(Y[2], 2));
-        Y[0] = -d*sinf(yaw);
-        Y[1] = d*cosf(yaw);
-        float b = Y[0]*Z[0] + Y[1]*Z[1] + Y[2]*Z[2];
-        if (b > eps || b < -eps) {
-            Y[2] = -sqrtf(1 / ( powf(Z[2]/a,2) + 1) );
-            d = sqrtf(1 - powf(Y[2], 2));
-            Y[0] = -d*sinf(yaw);
-            Y[1] = d*cosf(yaw);
+        X[2] = fast_invsqrtf( (Z[2]*Z[2])/(a*a) + 1.0f );
+        float d = 1 / fast_invsqrtf(1.0f-X[2]*X[2]);
+        X[1] = d*cosf(yaw);
+        X[2] = d*sinf(yaw);
+        vector_normalizef(X, 3);
+        float b = X[0]*Z[0] + X[1]*Z[1] + X[2]*Z[2];
+        if (fabsf(b) > EPSILON) {
+            X[2] = -X[2];
         }
     }
-    vector_normalizef(Y, 3);
 
-    // Solve for X axis = Y cross Z
-    X[0] = Y[1]*Z[2] - Y[2]*Z[1];
-    X[1] = Y[2]*Z[0] - Y[0]*Z[2];
-    X[2] = Y[0]*Z[1] - Y[1]*Z[0];
-    vector_normalizef(X,3);
+    // Solve for Y axis of rotation matrix
+    Y[0] = Z[1]*X[2] - Z[2]*X[1];
+    Y[1] = Z[2]*X[0] - Z[0]*X[2];
+    Y[2] = Z[0]*X[1] - Z[1]*X[0];
 
     // Construct rotation matrix
     float R[3][3];
@@ -325,21 +178,15 @@ void calcAttFromForceVec(float f[3], float yaw, StabilizationDesiredData* att)
     R[1][0] = X[1]; R[1][1] = Y[1]; R[1][2] = Z[1];
     R[2][0] = X[2]; R[2][1] = Y[2]; R[2][2] = Z[2];
 
-#ifdef DEBUG
-    printMat(R);
-#endif
-
     toEuler(R, &(att->Roll), &(att->Pitch), &(att->Yaw));
     att->Roll = rad2deg(att->Roll);
     att->Pitch = rad2deg(att->Pitch);
     att->Yaw = rad2deg(att->Yaw);
-    att->Thrust = forceNorm2thrustPercentage(fNorm);
-
-    return;
+    att->Thrust = forceNorm2thrustPercentage(f_norm);
 }
 
 float forceNorm2thrustPercentage(float f)
 {
-    f = boundf(f, 0.0f, FORCE_MAX);
-    return f / FORCE_MAX;
+    f = boundf(f, 0.0f, MAX_FORCE);
+    return f / MAX_FORCE;
 }

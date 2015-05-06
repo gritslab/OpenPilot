@@ -71,12 +71,17 @@ static float applyExpo(float value, float expo)
  */
 void stabilizedHandler(bool newinit)
 {
+
     if (newinit) {
         StabilizationDesiredInitialize();
         StabilizationBankInitialize();
     }
     ManualControlCommandData cmd;
     ManualControlCommandGet(&cmd);
+
+    if (cmd.FlightModeSwitchPosition != 1) {
+        return;
+    }
 
     FlightModeSettingsData settings;
     FlightModeSettingsGet(&settings);
@@ -166,6 +171,7 @@ void stabilizedHandler(bool newinit)
 
     stabilization.StabilizationMode.Thrust = stab_settings[3];
     stabilization.Thrust = cmd.Thrust;
+
     StabilizationDesiredSet(&stabilization);
 }
 
