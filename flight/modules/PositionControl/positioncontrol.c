@@ -4,7 +4,7 @@
 #include <pios_com.h>
 #include <mathmisc.h>
 
-#define STACK_SIZE_BYTES 612
+#define STACK_SIZE_BYTES 624
 #define TASK_PRIORITY    (tskIDLE_PRIORITY + 1)
 #define UPDATE_PERIOD_MS    100
 
@@ -179,14 +179,15 @@ static void PositionControlTask(__attribute__((unused)) void *parameters)
     pid_zero(&posPid[1]);
     pid_zero(&posPid[2]);
 
-    pid_configure(&posPid[0], 0.0f, 0.0f, 0.0f, 0);
-    pid_configure(&posPid[1], 0.0f, 0.0f, 0.0f, 0);
-    pid_configure(&posPid[2], 0.0f, 0.0f, 0.0f, 0);
+    pid_configure(&posPid[0], 0.1f, 0.0f, 0.0f, 0);
+    pid_configure(&posPid[1], 0.1f, 0.0f, 0.0f, 0);
+    pid_configure(&posPid[2], 0.1f, 0.0f, 0.0f, 0);
 
     ManualControlCommandData cmd;
 
     AttitudeStateData att;
     StabilizationDesiredData attDesired;
+
     float prevYaw = 0;
     float prevThrust = 0;
 
@@ -205,6 +206,7 @@ static void PositionControlTask(__attribute__((unused)) void *parameters)
             performControl(posPid, &attDesired, &pos, &posDesired);
         } else {
             AttitudeStateGet(&att);
+            StabilizationDesiredGet(&attDesired);
             prevYaw = att.Yaw;
             prevThrust = cmd.Thrust;
             posDesired.North = pos.North;
