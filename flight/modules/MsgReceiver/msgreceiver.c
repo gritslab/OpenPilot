@@ -13,7 +13,7 @@
 
 #define STACK_SIZE_BYTES 380
 #define TASK_PRIORITY    (tskIDLE_PRIORITY + 1)
-#define UPDATE_PERIOD_MS    5
+#define UPDATE_PERIOD_MS    20
 
 static xTaskHandle taskHandle;
 static void MsgReceiverTask(void *parameters);

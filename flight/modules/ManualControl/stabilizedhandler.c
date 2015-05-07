@@ -79,6 +79,7 @@ void stabilizedHandler(bool newinit)
     ManualControlCommandData cmd;
     ManualControlCommandGet(&cmd);
 
+    // added by Rowland
     if (cmd.FlightModeSwitchPosition == 1) {
         return;
     }

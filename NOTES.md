@@ -87,3 +87,31 @@ The Telemetry module should be last in the list.
 
 * UAVObject definitions are in `OpenPilot/shared/uavobjectdefinition`
 
+## CPU and Memory Usage
+
+* Attitude, Telemetry
+    * 31% 64 degrees CPU, 7990 bytes free
+* Attitude, Telemetry, FirmwareIAP
+    * 31% 64 degrees CPU, 7730 bytes free
+* Attitude, Telemetry, FirmwareIAP, Stabilization
+    * 49% 64 degrees CPU, 4930 bytes free
+* Attitude, Telemetry, FirmwareIAP, Stabilization, Receiver
+    * 55% 64 degrees CPU, 3670 bytes free
+* Attitude, Telemetry, FirmwareIAP, Stabilization, Receiver, Actuator
+    * 55% 64 degrees CPU, 2020 bytes free
+* Attitude, Telemetry, FirmwareIAP, Stabilization, Receiver, Actuator, ManualControl
+    * 84% CPU, 1410 bytes free
+* Attitude, Telemetry, FirmwareIAP, Stabilization, Receiver, Actuator, ManualControl, MsgReceiver (5 ms)
+    * 92% CPU, 712 bytes free
+* Attitude, Telemetry, FirmwareIAP, Stabilization, Receiver, Actuator, ManualControl, MsgReceiver (5 ms), PositionControl (20 ms)
+    * 99% CPU, 12 bytes free
+
+Summary:
+Attitude, Telemetry     = 31%
+FirmwareIAP             = <1%,  260 bytes
+Stabilization           = 18%, 2800 bytes
+Receiver                =  6%, 1270 bytes
+Actuator                = <1%, 1650 bytes
+ManualControl           = 29%,  610 bytes
+MsgReceiver (5 ms)      =  8%,  698 bytes
+PositionControl (20 ms) =  7%,  700 bytes

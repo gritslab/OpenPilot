@@ -42,10 +42,9 @@ MODULES += Stabilization
 MODULES += Actuator
 MODULES += Receiver
 MODULES += ManualControl
-MODULES += FirmwareIAP
+# MODULES += FirmwareIAP
 MODULES += MsgReceiver
 MODULES += PositionControl
-# MODULES += Test
 MODULES += Telemetry
 
 # List of optional modules to include
