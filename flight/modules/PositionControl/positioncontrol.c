@@ -6,7 +6,7 @@
 
 #define STACK_SIZE_BYTES 624
 #define TASK_PRIORITY    (tskIDLE_PRIORITY + 1)
-#define UPDATE_PERIOD_MS    100
+#define UPDATE_PERIOD_MS    20
 
 #define GRAVITY 9.80665f
 #define MASS 1.0f
@@ -50,16 +50,20 @@ static void PositionControlTask(__attribute__((unused)) void *parameters)
     pid_zero(&posPid[1]);
     pid_zero(&posPid[2]);
 
-    pid_configure(&posPid[0], 0.1f, 0.0f, 0.0f, 0);
-    pid_configure(&posPid[1], 0.1f, 0.0f, 0.0f, 0);
-    pid_configure(&posPid[2], 0.1f, 0.0f, 0.0f, 0);
+    pid_configure(&posPid[0], 0.6f, 0.0f, 1.0f, 0);
+    pid_configure(&posPid[1], 0.6f, 0.0f, 1.0f, 0);
+    pid_configure(&posPid[2], 1.5f, 1.0f, 0.5f, 0);
 
     ManualControlCommandData cmd;
 
     AttitudeStateData att;
     StabilizationDesiredData attDesired;
+    attDesired.StabilizationMode.Roll = STABILIZATIONDESIRED_STABILIZATIONMODE_ATTITUDE;
+    attDesired.StabilizationMode.Pitch = STABILIZATIONDESIRED_STABILIZATIONMODE_ATTITUDE;
+    attDesired.StabilizationMode.Yaw = STABILIZATIONDESIRED_STABILIZATIONMODE_ATTITUDE;
+    attDesired.StabilizationMode.Thrust = STABILIZATIONDESIRED_STABILIZATIONMODE_MANUAL;
 
-    // float up_thrust = 0.0f;
+    float up_thrust = 0.0f;
 
     PositionStateData pos;
     PositionDesiredData posDesired;
@@ -68,18 +72,13 @@ static void PositionControlTask(__attribute__((unused)) void *parameters)
     while (1) {
         ManualControlCommandGet(&cmd);
         PositionStateGet(&pos);
-        // PositionDesiredGet(&posDesired);
 
         if (cmd.FlightModeSwitchPosition == 1) {
-            // performControl(posPid, &pos, &posDesired, &up_thrust, &attDesired);
-            attDesired.Roll = 1.0f;
-            attDesired.Pitch = 2.0f;
-            attDesired.Yaw = 3.0f;
+            performControl(posPid, &pos, &posDesired, &up_thrust, &attDesired);
             StabilizationDesiredSet(&attDesired);
         } else {
             AttitudeStateGet(&att);
-            StabilizationDesiredGet(&attDesired);
-            // up_thrust = cmd.Thrust;
+            up_thrust = cmd.Thrust;
             attDesired.Yaw = att.Yaw;
             posDesired.North = pos.North;
             posDesired.East = pos.East;
@@ -152,14 +151,14 @@ void performControl(struct pid *posPid,
     // Solve for X axis of rotation matrix
     float a = Z[0]*cosf(yaw) + Z[1]*sinf(yaw);
     if (fabsf(a) < EPSILON) {
+        X[2] = 0.0f;
         X[0] = cosf(yaw);
         X[1] = sinf(yaw);
-        X[2] = 0.0f;
     } else {
         X[2] = fast_invsqrtf( (Z[2]*Z[2])/(a*a) + 1.0f );
         float d = 1 / fast_invsqrtf(1.0f-X[2]*X[2]);
-        X[1] = d*cosf(yaw);
-        X[2] = d*sinf(yaw);
+        X[0] = d*cosf(yaw);
+        X[1] = d*sinf(yaw);
         vector_normalizef(X, 3);
         float b = X[0]*Z[0] + X[1]*Z[1] + X[2]*Z[2];
         if (fabsf(b) > EPSILON) {
