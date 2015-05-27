@@ -100,7 +100,7 @@ static void MsgReceiverTask(__attribute__((unused)) void *parameters)
     PositionDesiredData pathDesired;
     PositionDesiredGet(&pathDesired);
 
-    portTickType readDelay = 10 / portTICK_RATE_MS;
+    portTickType readDelay = 10;
     uint8_t BUFFER_SIZE = 32;
     char readBuffer[BUFFER_SIZE];
     uint16_t readSize;
@@ -118,55 +118,57 @@ static void MsgReceiverTask(__attribute__((unused)) void *parameters)
 
     TickType_t lastWakeTime  = xTaskGetTickCount();
     while(1) {
-        while ((readSize = PIOS_COM_ReceiveBuffer(comPortMain, (uint8_t *)readBuffer, BUFFER_SIZE, readDelay)) > 0) {
-            for (uint8_t i=0; i<readSize; ++i) {
-                if (msgMarkerFlag == false) {
-                    if (readBuffer[i] == 0xFF) {
-                        msgMarkerFlag = true;
-                        msgByteInd = 0;
-                    }
+
+        readSize = PIOS_COM_ReceiveBuffer(comPortMain, (uint8_t *)readBuffer, BUFFER_SIZE, readDelay);
+
+        for (uint8_t i=0; i<readSize; ++i) {
+            if (msgMarkerFlag == false) {
+                if (readBuffer[i] == 0xFF) {
+                    msgMarkerFlag = true;
+                    msgByteInd = 0;
                 }
+            }
 
-                if (msgMarkerFlag == true) {
-                    msgBytePointer[msgByteInd++] = readBuffer[i];
-                    if (msgByteInd >= sizeof(msg.header)) {
-                        if (msg.header.type == POSITION) {
-                            if (msgByteInd >= sizeof(msg.pos)) {
-                                msgMarkerFlag = false;
-                                if (parityCheck((uint8_t *)&msg, sizeof(msg))) {
-                                    posState.North = msg.pos.x;
-                                    posState.East = msg.pos.y;
-                                    posState.Down = msg.pos.z;
-
-                                    PositionStateSet(&posState);
-
-                                    motion.North = msg.pos.x;
-                                    motion.East = msg.pos.y;
-                                    motion.Down = msg.pos.z;
-                                    motion.Yaw = msg.pos.yaw;
-
-                                    MotionCaptureSet(&motion);
-
-                                }
-                            }
-                        } else if (msg.header.type == POSITION_DESIRED) {
-                            if (msgByteInd >= sizeof(msg.posDesired)) {
-                                msgMarkerFlag = false;
-                                if (parityCheck((uint8_t *)&msg, sizeof(msg))) {
-                                    pathDesired.North = msg.posDesired.x;
-                                    pathDesired.East = msg.posDesired.y;
-                                    pathDesired.Down = msg.posDesired.z;
-
-                                    PositionDesiredSet(&pathDesired);
-                                }
-                            }
-                        } else {
+            if (msgMarkerFlag == true) {
+                msgBytePointer[msgByteInd++] = readBuffer[i];
+                if (msgByteInd >= sizeof(msg.header)) {
+                    if (msg.header.type == POSITION) {
+                        if (msgByteInd >= sizeof(msg.pos)) {
                             msgMarkerFlag = false;
+                            if (parityCheck((uint8_t *)&msg, sizeof(msg))) {
+                                posState.North = msg.pos.x;
+                                posState.East = msg.pos.y;
+                                posState.Down = msg.pos.z;
+
+                                PositionStateSet(&posState);
+
+                                motion.North = msg.pos.x;
+                                motion.East = msg.pos.y;
+                                motion.Down = msg.pos.z;
+                                motion.Yaw = msg.pos.yaw;
+
+                                MotionCaptureSet(&motion);
+
+                            }
                         }
+                    } else if (msg.header.type == POSITION_DESIRED) {
+                        if (msgByteInd >= sizeof(msg.posDesired)) {
+                            msgMarkerFlag = false;
+                            if (parityCheck((uint8_t *)&msg, sizeof(msg))) {
+                                pathDesired.North = msg.posDesired.x;
+                                pathDesired.East = msg.posDesired.y;
+                                pathDesired.Down = msg.posDesired.z;
+
+                                PositionDesiredSet(&pathDesired);
+                            }
+                        }
+                    } else {
+                        msgMarkerFlag = false;
                     }
                 }
             }
         }
+
 
         // Delay until it is time to read the next sample
         vTaskDelayUntil(&lastWakeTime, UPDATE_PERIOD_MS  / portTICK_RATE_MS);

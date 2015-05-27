@@ -196,6 +196,9 @@ int32_t AttitudeInitialize(void)
     AccelGyroSettingsInitialize();
     AccelStateInitialize();
     GyroStateInitialize();
+
+    // Added by Rowland
+    ManualControlCommandInitialize();
     MotionCaptureInitialize();
 
     // Initialize quaternion
@@ -712,23 +715,29 @@ __attribute__((optimize("O3"))) static void updateAttitude(AccelStateData *accel
     // Convert into eueler degrees (makes assumptions about RPY order)
     Quaternion2RPY(&attitudeState.q1, &attitudeState.Roll);
 
-    // AttitudeStateSet(&attitudeState);
+    // Added by Rowland
+    ManualControlCommandData cmd;
+    ManualControlCommandGet(&cmd);
 
-    MotionCaptureData motion;
-    MotionCaptureGet(&motion);
+    if (cmd.Channel[6] <= 1500) {
+        AttitudeStateSet(&attitudeState);
+    } else {
+        MotionCaptureData motion;
+        MotionCaptureGet(&motion);
 
-    attitudeState.Yaw = motion.Yaw;
-    float rpy[3];
-    rpy[0] = attitudeState.Roll;
-    rpy[1] = attitudeState.Pitch;
-    rpy[2] = attitudeState.Yaw;
-    RPY2Quaternion(rpy, q);
-    attitudeState.q1 = q[0];
-    attitudeState.q2 = q[1];
-    attitudeState.q3 = q[2];
-    attitudeState.q4 = q[3];
+        attitudeState.Yaw = motion.Yaw;
+        float rpy[3];
+        rpy[0] = attitudeState.Roll;
+        rpy[1] = attitudeState.Pitch;
+        rpy[2] = attitudeState.Yaw;
+        RPY2Quaternion(rpy, q);
+        attitudeState.q1 = q[0];
+        attitudeState.q2 = q[1];
+        attitudeState.q3 = q[2];
+        attitudeState.q4 = q[3];
 
-    AttitudeStateSet(&attitudeState);
+        AttitudeStateSet(&attitudeState);
+    }
 }
 
 static void settingsUpdatedCb(__attribute__((unused)) UAVObjEvent *objEv)
