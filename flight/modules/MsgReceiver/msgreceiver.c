@@ -8,7 +8,7 @@
 #include <motioncapture.h>
 #include <positionstate.h>
 #include <positiondesired.h>
-
+#include <manualcontrolcommand.h>
 
 
 #define STACK_SIZE_BYTES 380
@@ -67,6 +67,7 @@ int32_t MsgReceiverInitialize(void)
     MotionCaptureInitialize();
     PositionStateInitialize();
     PositionDesiredInitialize();
+    ManualControlCommandInitialize();
 
     // Set port
     comPortMain = PIOS_COM_GPS;
@@ -97,8 +98,8 @@ static void MsgReceiverTask(__attribute__((unused)) void *parameters)
     PositionStateData posState;
     PositionStateGet(&posState);
 
-    PositionDesiredData pathDesired;
-    PositionDesiredGet(&pathDesired);
+    PositionDesiredData posDesired;
+    PositionDesiredGet(&posDesired);
 
     portTickType readDelay = 10;
     uint8_t BUFFER_SIZE = 32;
@@ -155,11 +156,16 @@ static void MsgReceiverTask(__attribute__((unused)) void *parameters)
                         if (msgByteInd >= sizeof(msg.posDesired)) {
                             msgMarkerFlag = false;
                             if (parityCheck((uint8_t *)&msg, sizeof(msg))) {
-                                pathDesired.North = msg.posDesired.x;
-                                pathDesired.East = msg.posDesired.y;
-                                pathDesired.Down = msg.posDesired.z;
+                                posDesired.North = msg.posDesired.x;
+                                posDesired.East = msg.posDesired.y;
+                                posDesired.Down = msg.posDesired.z;
 
-                                PositionDesiredSet(&pathDesired);
+                                ManualControlCommandData cmd;
+                                ManualControlCommandGet(&cmd);
+
+                                if (cmd.FlightModeSwitchPosition == 1) {
+                                    PositionDesiredSet(&posDesired);
+                                }
                             }
                         }
                     } else {

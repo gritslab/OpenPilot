@@ -50,9 +50,9 @@ static void PositionControlTask(__attribute__((unused)) void *parameters)
     pid_zero(&posPid[1]);
     pid_zero(&posPid[2]);
 
-    pid_configure(&posPid[0], 0.6f, 0.0f, 1.0f, 0);
-    pid_configure(&posPid[1], 0.6f, 0.0f, 1.0f, 0);
-    pid_configure(&posPid[2], 1.5f, 1.0f, 0.5f, 0);
+    pid_configure(&posPid[0], 0.75f, 0.0f, 1.0f, 0);
+    pid_configure(&posPid[1], 0.75f, 0.0f, 1.0f, 0);
+    pid_configure(&posPid[2], 2.0f, 1.0f, 0.75f, 0);
 
     ManualControlCommandData cmd;
 
@@ -74,6 +74,7 @@ static void PositionControlTask(__attribute__((unused)) void *parameters)
         PositionStateGet(&pos);
 
         if (cmd.FlightModeSwitchPosition == 1) {
+            PositionDesiredGet(&posDesired);
             performControl(posPid, &pos, &posDesired, &up_thrust, &attDesired);
             StabilizationDesiredSet(&attDesired);
         } else {
@@ -83,8 +84,9 @@ static void PositionControlTask(__attribute__((unused)) void *parameters)
             posDesired.North = pos.North;
             posDesired.East = pos.East;
             posDesired.Down = pos.Down;
+
+            PositionDesiredSet(&posDesired);
         }
-        PositionDesiredSet(&posDesired);
 
         // Delay
         vTaskDelayUntil(&lastWakeTime, UPDATE_PERIOD_MS  / portTICK_RATE_MS);
