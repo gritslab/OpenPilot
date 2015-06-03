@@ -16,10 +16,10 @@
 #define EPSILON 1.0e-3f // size of zero ball
 
 // Default PID values
-#define XY_P 0.5f
-#define XY_D 0.55f
+#define XY_P 0.2f
+#define XY_D 0.2f
 #define Z_P 1.0f
-#define Z_I 0.0f
+#define Z_I 0.1f
 #define Z_D 0.3f
 
 
