@@ -116,3 +116,17 @@ Actuator                = <1%, 1650 bytes
 ManualControl           = 29%,  610 bytes
 MsgReceiver (5 ms)      =  8%,  698 bytes
 PositionControl (20 ms) =  7%,  700 bytes
+
+
+## PID Values
+
+# Big Quad
+
+* Attitude P, I, D, ILimit (Didn't touch PI gains):
+    * Roll & Pitch Rate: .004, .004, 3.3e-5, .3
+    * Yaw Rate: .0062, .01, 5e-5, .3
+
+* Position P, I, D:
+    * X & Y: 0.95, 0, 1.7
+    * Z: 2.0, 0.4, 1.0
+

@@ -12,7 +12,7 @@
 #include <positionpid.h>
 
 
-#define STACK_SIZE_BYTES 400
+#define STACK_SIZE_BYTES 492
 #define TASK_PRIORITY    (tskIDLE_PRIORITY + 1)
 #define UPDATE_PERIOD_MS    20
 

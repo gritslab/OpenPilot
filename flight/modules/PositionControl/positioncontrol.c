@@ -4,7 +4,7 @@
 #include <pios_com.h>
 #include <mathmisc.h>
 
-#define STACK_SIZE_BYTES 724
+#define STACK_SIZE_BYTES 832
 #define TASK_PRIORITY    (tskIDLE_PRIORITY + 1)
 #define UPDATE_PERIOD_MS    20
 
@@ -16,14 +16,13 @@
 #define EPSILON 1.0e-3f // size of zero ball
 
 // Default PID values
-#define XY_P 0.2f
-#define XY_D 0.2f
-#define Z_P 1.0f
-#define Z_I 0.1f
-#define Z_D 0.3f
 
-
-
+// Big quad
+#define XY_P 0.95f
+#define XY_D 1.7f
+#define Z_P 2.0f
+#define Z_I 0.4f
+#define Z_D 1.0f
 
 static xTaskHandle taskHandle;
 static void PositionControlTask(void *parameters);
@@ -69,9 +68,9 @@ static void PositionControlTask(__attribute__((unused)) void *parameters)
     pid_zero(&posPid[1]);
     pid_zero(&posPid[2]);
 
-    // pid_configure(&posPid[0], 0.75f, 0.0f, 1.0f, 0);
-    // pid_configure(&posPid[1], 0.75f, 0.0f, 1.0f, 0);
-    // pid_configure(&posPid[2], 2.0f, 1.0f, 0.75f, 0);
+    pid_configure(&posPid[0], posPidValues.xy_p, 0.0f, posPidValues.xy_d, 0);
+    pid_configure(&posPid[1], posPidValues.xy_p, 0.0f, posPidValues.xy_d, 0);
+    pid_configure(&posPid[2], posPidValues.z_p, posPidValues.z_i, posPidValues.z_d, 2*posPidValues.z_i);
 
     ManualControlCommandData cmd;
 
@@ -96,12 +95,6 @@ static void PositionControlTask(__attribute__((unused)) void *parameters)
 
             PositionDesiredGet(&posDesired);
 
-            PositionPidGet(&posPidValues);
-
-            pid_configure(&posPid[0], posPidValues.xy_p, 0.0f, posPidValues.xy_d, 0);
-            pid_configure(&posPid[1], posPidValues.xy_p, 0.0f, posPidValues.xy_d, 0);
-            pid_configure(&posPid[2], posPidValues.z_p, posPidValues.z_i, posPidValues.z_d, 2*posPidValues.z_i);
-
             performControl(posPid, &pos, &posDesired, &up_thrust, &attDesired);
             StabilizationDesiredSet(&attDesired);
 
@@ -114,6 +107,12 @@ static void PositionControlTask(__attribute__((unused)) void *parameters)
             posDesired.Down = pos.Down;
 
             PositionDesiredSet(&posDesired);
+
+            PositionPidGet(&posPidValues);
+
+            pid_configure(&posPid[0], posPidValues.xy_p, 0.0f, posPidValues.xy_d, 0);
+            pid_configure(&posPid[1], posPidValues.xy_p, 0.0f, posPidValues.xy_d, 0);
+            pid_configure(&posPid[2], posPidValues.z_p, posPidValues.z_i, posPidValues.z_d, 2*posPidValues.z_i);
         }
 
         // Delay
