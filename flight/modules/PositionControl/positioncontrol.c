@@ -50,9 +50,13 @@ static void PositionControlTask(__attribute__((unused)) void *parameters)
     pid_zero(&posPid[1]);
     pid_zero(&posPid[2]);
 
-    pid_configure(&posPid[0], 0.75f, 0.0f, 1.0f, 0);
-    pid_configure(&posPid[1], 0.75f, 0.0f, 1.0f, 0);
-    pid_configure(&posPid[2], 2.0f, 1.0f, 0.75f, 0);
+    // pid_configure(&posPid[0], 0.75f, 0.0f, 1.0f, 0);
+    // pid_configure(&posPid[1], 0.75f, 0.0f, 1.0f, 0);
+    // pid_configure(&posPid[2], 2.0f, 1.0f, 0.75f, 0);
+
+    pid_configure(&posPid[0], 0.5f, 0.0f, 0.0f, 0);
+    pid_configure(&posPid[1], 0.5f, 0.0f, 0.0f, 0);
+    pid_configure(&posPid[2], 1.0f, 0.0f, 0.0f, 0);
 
     ManualControlCommandData cmd;
 
