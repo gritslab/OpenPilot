@@ -15,6 +15,16 @@
 #define MAX_Z_ACC 2.0f // [m/s^2]
 #define EPSILON 1.0e-3f // size of zero ball
 
+// Default PID values
+#define XY_P 0.5f
+#define XY_D 0.0f
+#define Z_P 0.5f
+#define Z_I 0.0f
+#define Z_D 0.00f
+
+
+
+
 static xTaskHandle taskHandle;
 static void PositionControlTask(void *parameters);
 
@@ -24,6 +34,7 @@ int32_t PositionControlInitialize(void)
     PositionStateInitialize();
     PositionDesiredInitialize();
     StabilizationDesiredInitialize();
+    PositionPidInitialize();
 
     return 0;
 }
@@ -44,6 +55,14 @@ MODULE_INITCALL(PositionControlInitialize, PositionControlStart);
 
 static void PositionControlTask(__attribute__((unused)) void *parameters)
 {
+    PositionPidData posPidValues;
+    posPidValues.xy_p = XY_P;
+    posPidValues.xy_d = XY_D;
+    posPidValues.z_p = Z_P;
+    posPidValues.z_i = Z_I;
+    posPidValues.z_d = Z_D;
+    PositionPidSet(&posPidValues);
+
     struct pid posPid[3];
 
     pid_zero(&posPid[0]);
@@ -54,9 +73,11 @@ static void PositionControlTask(__attribute__((unused)) void *parameters)
     // pid_configure(&posPid[1], 0.75f, 0.0f, 1.0f, 0);
     // pid_configure(&posPid[2], 2.0f, 1.0f, 0.75f, 0);
 
-    pid_configure(&posPid[0], 0.5f, 0.0f, 0.0f, 0);
-    pid_configure(&posPid[1], 0.5f, 0.0f, 0.0f, 0);
-    pid_configure(&posPid[2], 1.0f, 0.0f, 0.0f, 0);
+    // pid_configure(&posPid[0], 0.5f, 0.0f, 0.0f, 0);
+    // pid_configure(&posPid[1], 0.5f, 0.0f, 0.0f, 0);
+    // pid_configure(&posPid[2], 1.0f, 0.0f, 0.0f, 0);
+
+
 
     ManualControlCommandData cmd;
 
@@ -79,6 +100,13 @@ static void PositionControlTask(__attribute__((unused)) void *parameters)
 
         if (cmd.FlightModeSwitchPosition == 1) {
             PositionDesiredGet(&posDesired);
+
+            PositionPidGet(&posPidValues);
+
+            pid_configure(&posPid[0], posPidValues.xy_p, 0.0f, posPidValues.xy_d, 0);
+            pid_configure(&posPid[1], posPidValues.xy_p, 0.0f, posPidValues.xy_d, 0);
+            pid_configure(&posPid[2], posPidValues.z_p, posPidValues.z_i, posPidValues.z_d, 2*posPidValues.z_i);
+
             performControl(posPid, &pos, &posDesired, &up_thrust, &attDesired);
             StabilizationDesiredSet(&attDesired);
         } else {

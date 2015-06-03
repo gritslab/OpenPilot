@@ -9,6 +9,7 @@
 #include <positionstate.h>
 #include <positiondesired.h>
 #include <manualcontrolcommand.h>
+#include <positionpid.h>
 
 
 #define STACK_SIZE_BYTES 380
@@ -22,7 +23,8 @@ static uint32_t comPortMain;
 
 enum MsgType {
     POSITION = 1,
-    POSITION_DESIRED = 2
+    POSITION_DESIRED = 2,
+    POSITION_PID = 3
 };
 
 // size = 4
@@ -52,6 +54,15 @@ struct MsgPositionDesired {
     float yaw;
 };
 
+struct MsgPositionPid {
+    struct MsgHeader header;
+    float xy_p;
+    float xy_d;
+    float z_p;
+    float z_i;
+    float z_d;
+};
+
 bool parityCheck(uint8_t* msg, uint8_t msgSize)
 {
     uint8_t msgByte = 0;
@@ -68,6 +79,7 @@ int32_t MsgReceiverInitialize(void)
     PositionStateInitialize();
     PositionDesiredInitialize();
     ManualControlCommandInitialize();
+    PositionPidInitialize();
 
     // Set port
     comPortMain = PIOS_COM_GPS;
@@ -101,6 +113,9 @@ static void MsgReceiverTask(__attribute__((unused)) void *parameters)
     PositionDesiredData posDesired;
     PositionDesiredGet(&posDesired);
 
+    PositionPidData posPid;
+    PositionPidGet(&posPid);
+
     portTickType readDelay = 10;
     uint8_t BUFFER_SIZE = 32;
     char readBuffer[BUFFER_SIZE];
@@ -110,6 +125,7 @@ static void MsgReceiverTask(__attribute__((unused)) void *parameters)
         struct MsgHeader header;
         struct MsgPosition pos;
         struct MsgPositionDesired posDesired;
+        struct MsgPositionPid posPid;
     } msg;
     memset(&msg, 0, sizeof(msg));
 
@@ -133,6 +149,7 @@ static void MsgReceiverTask(__attribute__((unused)) void *parameters)
             if (msgMarkerFlag == true) {
                 msgBytePointer[msgByteInd++] = readBuffer[i];
                 if (msgByteInd >= sizeof(msg.header)) {
+
                     if (msg.header.type == POSITION) {
                         if (msgByteInd >= sizeof(msg.pos)) {
                             msgMarkerFlag = false;
@@ -152,6 +169,7 @@ static void MsgReceiverTask(__attribute__((unused)) void *parameters)
 
                             }
                         }
+
                     } else if (msg.header.type == POSITION_DESIRED) {
                         if (msgByteInd >= sizeof(msg.posDesired)) {
                             msgMarkerFlag = false;
@@ -166,6 +184,19 @@ static void MsgReceiverTask(__attribute__((unused)) void *parameters)
                                 if (cmd.FlightModeSwitchPosition == 1) {
                                     PositionDesiredSet(&posDesired);
                                 }
+                            }
+                        }
+                    } else if (msg.header.type == POSITION_PID) {
+                        if (msgByteInd >= sizeof(msg.posPid)) {
+                            msgMarkerFlag = false;
+                            if (parityCheck((uint8_t *)&msg, sizeof(msg))) {
+                                posPid.xy_p = msg.posPid.xy_p;
+                                posPid.xy_d = msg.posPid.xy_d;
+                                posPid.z_p = msg.posPid.z_p;
+                                posPid.z_i = msg.posPid.z_i;
+                                posPid.z_d = msg.posPid.z_d;
+
+                                PositionPidSet(&posPid);
                             }
                         }
                     } else {

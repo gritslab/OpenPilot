@@ -51,7 +51,8 @@ Flashing firmware
 
 ## Adding new UAVObject
 
-* Create new UAVObject xml file in `OpenPilot/shared/uavobjectdefinition`
+* Create new UAVObject xml definition file in `OpenPilot/shared/uavobjectdefinition`
+* Add uavobject to make file at `OpenPilot/flight/targets/boards/coptercontrol/firmware/Makefile`
 * Add .h and .cpp file to `OpenPilot/ground/openpilotgcs/src/plugins/uavobjects/uavobjects.pro`
 * Recompile GCS
 

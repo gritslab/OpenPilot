@@ -134,6 +134,7 @@ ifndef TESTAPP
     SRC += $(OPUAVSYNTHDIR)/positiondesired.c
     SRC += $(OPUAVSYNTHDIR)/velocitydesired.c
     SRC += $(OPUAVSYNTHDIR)/motioncapture.c
+    SRC += $(OPUAVSYNTHDIR)/positionpid.c
     # Command line option for Gcsreceiver module
     ifeq ($(GCSRECEIVER), YES)
         SRC += $(OPUAVSYNTHDIR)/gcsreceiver.c
