@@ -14,7 +14,7 @@ All compiling is done from the OpenPilot root folder.
 
 From the beginning...
 
-    >> make arm_sdk_install
+    >> make all_sdk_install
     >> make all
 
 Updating flight code...

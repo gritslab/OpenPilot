@@ -12,7 +12,7 @@
 #include <positionpid.h>
 
 
-#define STACK_SIZE_BYTES 380
+#define STACK_SIZE_BYTES 400
 #define TASK_PRIORITY    (tskIDLE_PRIORITY + 1)
 #define UPDATE_PERIOD_MS    20
 
@@ -54,6 +54,7 @@ struct MsgPositionDesired {
     float yaw;
 };
 
+// size 4+5*4 = 24
 struct MsgPositionPid {
     struct MsgHeader header;
     float xy_p;
@@ -117,7 +118,7 @@ static void MsgReceiverTask(__attribute__((unused)) void *parameters)
     PositionPidGet(&posPid);
 
     portTickType readDelay = 10;
-    uint8_t BUFFER_SIZE = 32;
+    uint8_t BUFFER_SIZE = 40;
     char readBuffer[BUFFER_SIZE];
     uint16_t readSize;
 
@@ -152,7 +153,6 @@ static void MsgReceiverTask(__attribute__((unused)) void *parameters)
 
                     if (msg.header.type == POSITION) {
                         if (msgByteInd >= sizeof(msg.pos)) {
-                            msgMarkerFlag = false;
                             if (parityCheck((uint8_t *)&msg, sizeof(msg))) {
                                 posState.North = msg.pos.x;
                                 posState.East = msg.pos.y;
@@ -166,13 +166,13 @@ static void MsgReceiverTask(__attribute__((unused)) void *parameters)
                                 motion.Yaw = msg.pos.yaw;
 
                                 MotionCaptureSet(&motion);
-
                             }
+                            msgMarkerFlag = false;
+                            memset(&msg, 0, sizeof(msg));
                         }
 
                     } else if (msg.header.type == POSITION_DESIRED) {
                         if (msgByteInd >= sizeof(msg.posDesired)) {
-                            msgMarkerFlag = false;
                             if (parityCheck((uint8_t *)&msg, sizeof(msg))) {
                                 posDesired.North = msg.posDesired.x;
                                 posDesired.East = msg.posDesired.y;
@@ -185,10 +185,12 @@ static void MsgReceiverTask(__attribute__((unused)) void *parameters)
                                     PositionDesiredSet(&posDesired);
                                 }
                             }
+                            msgMarkerFlag = false;
+                            memset(&msg, 0, sizeof(msg));
                         }
+
                     } else if (msg.header.type == POSITION_PID) {
                         if (msgByteInd >= sizeof(msg.posPid)) {
-                            msgMarkerFlag = false;
                             if (parityCheck((uint8_t *)&msg, sizeof(msg))) {
                                 posPid.xy_p = msg.posPid.xy_p;
                                 posPid.xy_d = msg.posPid.xy_d;
@@ -198,6 +200,8 @@ static void MsgReceiverTask(__attribute__((unused)) void *parameters)
 
                                 PositionPidSet(&posPid);
                             }
+                            msgMarkerFlag = false;
+                            memset(&msg, 0, sizeof(msg));
                         }
                     } else {
                         msgMarkerFlag = false;

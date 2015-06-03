@@ -4,7 +4,7 @@
 #include <pios_com.h>
 #include <mathmisc.h>
 
-#define STACK_SIZE_BYTES 624
+#define STACK_SIZE_BYTES 724
 #define TASK_PRIORITY    (tskIDLE_PRIORITY + 1)
 #define UPDATE_PERIOD_MS    20
 
@@ -17,10 +17,10 @@
 
 // Default PID values
 #define XY_P 0.5f
-#define XY_D 0.0f
-#define Z_P 0.5f
+#define XY_D 0.55f
+#define Z_P 1.0f
 #define Z_I 0.0f
-#define Z_D 0.00f
+#define Z_D 0.3f
 
 
 
@@ -73,12 +73,6 @@ static void PositionControlTask(__attribute__((unused)) void *parameters)
     // pid_configure(&posPid[1], 0.75f, 0.0f, 1.0f, 0);
     // pid_configure(&posPid[2], 2.0f, 1.0f, 0.75f, 0);
 
-    // pid_configure(&posPid[0], 0.5f, 0.0f, 0.0f, 0);
-    // pid_configure(&posPid[1], 0.5f, 0.0f, 0.0f, 0);
-    // pid_configure(&posPid[2], 1.0f, 0.0f, 0.0f, 0);
-
-
-
     ManualControlCommandData cmd;
 
     AttitudeStateData att;
@@ -99,6 +93,7 @@ static void PositionControlTask(__attribute__((unused)) void *parameters)
         PositionStateGet(&pos);
 
         if (cmd.FlightModeSwitchPosition == 1) {
+
             PositionDesiredGet(&posDesired);
 
             PositionPidGet(&posPidValues);
@@ -109,6 +104,7 @@ static void PositionControlTask(__attribute__((unused)) void *parameters)
 
             performControl(posPid, &pos, &posDesired, &up_thrust, &attDesired);
             StabilizationDesiredSet(&attDesired);
+
         } else {
             AttitudeStateGet(&att);
             up_thrust = cmd.Thrust;
